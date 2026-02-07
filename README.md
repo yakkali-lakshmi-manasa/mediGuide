@@ -1,91 +1,284 @@
-# Welcome to Your Miaoda Project
+# HealthCare Navigator
 
-## Project Info
+An AI-powered healthcare assessment and care navigation system designed to help users understand their symptoms, identify possible health conditions, receive specialist recommendations, and find suitable hospitals.
 
-## Project Directory
+## ⚠️ Important Medical Disclaimer
 
+**This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions.** The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
+
+## 🌟 Features
+
+### 1. Symptom Assessment
+- **Structured Symptom Selection**: Choose from a comprehensive list of predefined symptoms
+- **Free-text Description**: Describe symptoms in your own words
+- **Severity & Duration Tracking**: Record symptom severity (mild/moderate/severe) and duration
+- **Image Upload**: Upload images for skin conditions and visible symptoms
+- **User Profile**: Optional age, gender, medical history for personalized analysis
+
+### 2. AI-Powered Analysis
+- **Symptom-Based Analysis**: ML-powered analysis of symptom combinations
+- **Confidence Scoring**: Each possible condition comes with a confidence score
+- **Reasoning Explanation**: Clear explanation of why each condition is suggested
+- **Red-Flag Detection**: Automatic detection of critical symptoms requiring immediate care
+
+### 3. Disease Information
+- **Comprehensive Details**: Description, causes, risk factors for each condition
+- **Classification**: Chronic vs acute, infectious vs non-infectious
+- **Urgency Levels**: Low, medium, high, or emergency classification
+
+### 4. Specialist Recommendations
+- **Appropriate Specialists**: Recommendations based on possible conditions
+- **Specialist Descriptions**: Information about each medical specialty
+- **Multiple Options**: Support for conditions requiring multiple specialist types
+
+### 5. Hospital Finder
+- **Location-Based Search**: Find hospitals by city or pincode
+- **Budget Filtering**: Filter by cost range
+- **Hospital Type**: Government, private, or both
+- **Specialist Availability**: Filter by required specialist departments
+- **Insurance Information**: View accepted insurance providers
+- **Distance Calculation**: See distance from your location
+- **Map Integration**: Direct links to Google Maps
+
+### 6. Emergency Alerts
+- **Critical Symptom Detection**: Automatic detection of emergency symptoms
+- **Prominent Warnings**: Clear, unmissable emergency alerts
+- **Emergency Contact**: Quick access to emergency services
+
+## 🏗️ Technical Architecture
+
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **UI Library**: shadcn/ui components
+- **Styling**: Tailwind CSS with custom healthcare theme
+- **Routing**: React Router v6
+- **Forms**: React Hook Form with validation
+- **State Management**: React Context + Hooks
+
+### Backend
+- **Database**: Supabase (PostgreSQL)
+- **Storage**: Supabase Storage for medical images
+- **Edge Functions**: Deno-based serverless functions for AI analysis
+- **Authentication**: Ready for Supabase Auth integration
+
+### Database Schema
+- **symptoms**: Comprehensive symptom catalog with red-flag indicators
+- **diseases**: Disease information with urgency levels
+- **specialists**: Medical specialist types and descriptions
+- **hospitals**: Hospital database with location and cost data
+- **diagnostic_tests**: Recommended diagnostic tests
+- **disease_symptom_mapping**: Symptom-disease relationships with weights
+- **disease_specialist_mapping**: Disease-specialist relationships
+- **hospital_specialist_mapping**: Hospital specialist availability
+- **insurance_providers**: Insurance acceptance by hospital
+- **user_assessments**: User assessment history
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm/pnpm
+- Supabase account (already configured)
+
+### Installation
+
+1. **Install dependencies**:
+```bash
+npm install
+# or
+pnpm install
 ```
-├── README.md # Documentation
-├── components.json # Component library configuration
-├── index.html # Entry file
-├── package.json # Package management
-├── postcss.config.js # PostCSS configuration
-├── public # Static resources directory
-│   ├── favicon.png # Icon
-│   └── images # Image resources
-├── src # Source code directory
-│   ├── App.tsx # Entry file
-│   ├── components # Components directory
-│   ├── context # Context directory
-│   ├── db # Database configuration directory
-│   ├── hooks # Common hooks directory
-│   ├── index.css # Global styles
-│   ├── layout # Layout directory
-│   ├── lib # Utility library directory
-│   ├── main.tsx # Entry file
-│   ├── routes.tsx # Routing configuration
-│   ├── pages # Pages directory
-│   ├── services # Database interaction directory
-│   ├── types # Type definitions directory
-├── tsconfig.app.json # TypeScript frontend configuration file
-├── tsconfig.json # TypeScript configuration file
-├── tsconfig.node.json # TypeScript Node.js configuration file
-└── vite.config.ts # Vite configuration file
+
+2. **Environment variables** (already configured):
+```
+VITE_SUPABASE_URL=https://gplmolgdmowwxrcdrvve.supabase.co
+VITE_SUPABASE_ANON_KEY=[configured]
 ```
 
-## Tech Stack
-
-Vite, TypeScript, React, Supabase
-
-## Development Guidelines
-
-### How to edit code locally?
-
-You can choose [VSCode](https://code.visualstudio.com/Download) or any IDE you prefer. The only requirement is to have Node.js and npm installed.
-
-### Environment Requirements
-
-```
-# Node.js ≥ 20
-# npm ≥ 10
-Example:
-# node -v   # v20.18.3
-# npm -v    # 10.8.2
+3. **Run development server**:
+```bash
+npm run dev
 ```
 
-### Installing Node.js on Windows
-
-```
-# Step 1: Visit the Node.js official website: https://nodejs.org/, click download. The website will automatically suggest a suitable version (32-bit or 64-bit) for your system.
-# Step 2: Run the installer: Double-click the downloaded installer to run it.
-# Step 3: Complete the installation: Follow the installation wizard to complete the process.
-# Step 4: Verify installation: Open Command Prompt (cmd) or your IDE terminal, and type `node -v` and `npm -v` to check if Node.js and npm are installed correctly.
+4. **Build for production**:
+```bash
+npm run build
 ```
 
-### Installing Node.js on macOS
+## 📱 Application Flow
 
+1. **Home Page**: Introduction, disclaimer, and feature overview
+2. **Symptom Assessment**: User inputs symptoms, severity, duration, and optional image
+3. **AI Analysis**: Edge function analyzes symptoms and returns possible conditions
+4. **Results Page**: Display possible conditions, specialists, tests, and urgency level
+5. **Disease Details**: Detailed information about specific conditions
+6. **Hospital Finder**: Search and filter hospitals based on needs
+
+## 🎨 Design System
+
+### Color Palette
+- **Primary**: Calming blue (#0891B2) - Trust and professionalism
+- **Secondary**: Medical green (#16A085) - Health and wellness
+- **Accent**: Light blue for highlights
+- **Destructive**: Red for emergency alerts
+- **Muted**: Neutral grays for backgrounds
+
+### Typography
+- Clean, readable fonts
+- Clear hierarchy for medical information
+- Accessible contrast ratios (WCAG AA compliant)
+
+## 🔒 Safety & Privacy
+
+### Medical Safety
+- Prominent disclaimers on all pages
+- "Possible condition" instead of "diagnosis"
+- "Recommendation" instead of "prescription"
+- Emergency red-flag symptom detection
+- Clear guidance to seek professional care
+
+### Data Privacy
+- Secure storage of health information
+- Row-level security policies
+- No sharing of personal medical data
+- User consent for data collection
+
+### Limitations
+- ❌ NO medical diagnosis
+- ❌ NO medication prescriptions
+- ❌ NO treatment plans
+- ✅ Information and guidance only
+- ✅ Professional consultation required
+
+## 📊 Sample Data
+
+The application includes sample data for:
+- 20 common symptoms (including red-flag symptoms)
+- 12 diseases with varying urgency levels
+- 10 medical specialists
+- 6 hospitals (government and private)
+- 9 diagnostic tests
+- Insurance provider information
+
+## 🔧 API Endpoints (Edge Functions)
+
+### analyze-symptoms
+**POST** `/functions/v1/analyze-symptoms`
+
+Analyzes user symptoms and returns possible conditions with confidence scores.
+
+**Request Body**:
+```json
+{
+  "symptoms": {
+    "symptom_ids": ["uuid1", "uuid2"],
+    "symptom_description": "Additional details",
+    "duration": "3 days",
+    "severity": "moderate"
+  },
+  "userProfile": {
+    "age": 30,
+    "gender": "male",
+    "medical_history": "..."
+  },
+  "imageUrl": "https://..."
+}
 ```
-# Step 1: Using Homebrew (Recommended method): Open Terminal. Type the command `brew install node` and press Enter. If Homebrew is not installed, you need to install it first by running the following command in Terminal:
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-Alternatively, use the official installer: Visit the Node.js official website. Download the macOS .pkg installer. Open the downloaded .pkg file and follow the prompts to complete the installation.
-# Step 2: Verify installation: Open Command Prompt (cmd) or your IDE terminal, and type `node -v` and `npm -v` to check if Node.js and npm are installed correctly.
+
+**Response**:
+```json
+{
+  "possible_conditions": [...],
+  "urgency_level": "medium",
+  "red_flags": [...],
+  "recommended_specialists": [...],
+  "recommended_tests": [...],
+  "emergency_alert": false
+}
 ```
 
-### After installation, follow these steps:
+## 🎯 Use Cases
 
+### Academic Project
+- Demonstrates full-stack development skills
+- Shows understanding of healthcare domain
+- Implements AI/ML concepts
+- Database design and optimization
+- User experience design
+
+### Hackathon
+- Complete working prototype
+- Addresses real-world healthcare problem
+- Scalable architecture
+- Modern tech stack
+
+### Startup MVP
+- Production-ready codebase
+- Extensible architecture
+- User-friendly interface
+- Safety-first approach
+
+## 🛠️ Development
+
+### Project Structure
 ```
-# Step 1: Download the code package
-# Step 2: Extract the code package
-# Step 3: Open the code package with your IDE and navigate into the code directory
-# Step 4: In the IDE terminal, run the command to install dependencies: npm i
-# Step 5: In the IDE terminal, run the command to start the development server: npm run dev -- --host 127.0.0.1
-# Step 6: if step 5 failed, try this command to start the development server: npx vite --host 127.0.0.1
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui components
+│   ├── DiseaseCard.tsx
+│   ├── SpecialistCard.tsx
+│   ├── HospitalCard.tsx
+│   ├── EmergencyAlert.tsx
+│   └── MedicalDisclaimer.tsx
+├── pages/              # Application pages
+│   ├── HomePage.tsx
+│   ├── AssessmentPage.tsx
+│   ├── ResultsPage.tsx
+│   ├── DiseaseDetailsPage.tsx
+│   └── HospitalFinderPage.tsx
+├── db/                 # Database layer
+│   ├── supabase.ts
+│   └── api.ts
+├── types/              # TypeScript types
+│   └── index.ts
+└── routes.tsx          # Route configuration
+
+supabase/
+└── functions/
+    └── analyze-symptoms/
+        └── index.ts    # AI analysis edge function
 ```
 
-### How to develop backend services?
+### Key Technologies
+- **React 18**: Modern React with hooks
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **shadcn/ui**: High-quality component library
+- **Supabase**: Backend-as-a-Service
+- **React Router**: Client-side routing
+- **React Hook Form**: Form management
+- **Lucide React**: Icon library
 
-Configure environment variables and install relevant dependencies.If you need to use a database, please use the official version of Supabase.
+## 📈 Future Enhancements
 
-## Learn More
+- [ ] User authentication and profile management
+- [ ] Assessment history tracking
+- [ ] Multi-language support
+- [ ] Telemedicine integration
+- [ ] Appointment booking
+- [ ] Medication reminders
+- [ ] Health tracking dashboard
+- [ ] Integration with wearable devices
+- [ ] Advanced ML models for better accuracy
+- [ ] Real-time chat with healthcare professionals
 
-You can also check the help documentation: Download and Building the app（ [https://intl.cloud.baidu.com/en/doc/MIAODA/s/download-and-building-the-app-en](https://intl.cloud.baidu.com/en/doc/MIAODA/s/download-and-building-the-app-en)）to learn more detailed content.
+## 📄 License
+
+This project is created for educational and demonstration purposes.
+
+## 👥 Support
+
+For questions or issues, please refer to the documentation or contact the development team.
+
+---
+
+**Remember**: This is an information tool, not a replacement for professional medical advice. Always consult healthcare professionals for proper diagnosis and treatment.

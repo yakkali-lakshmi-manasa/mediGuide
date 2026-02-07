@@ -1,4 +1,8 @@
-import SamplePage from './pages/SamplePage';
+import HomePage from './pages/HomePage';
+import AssessmentPage from './pages/AssessmentPage';
+import ResultsPage from './pages/ResultsPage';
+import DiseaseDetailsPage from './pages/DiseaseDetailsPage';
+import HospitalFinderPage from './pages/HospitalFinderPage';
 import type { ReactNode } from 'react';
 
 interface RouteConfig {
@@ -10,10 +14,35 @@ interface RouteConfig {
 
 const routes: RouteConfig[] = [
   {
-    name: 'Sample Page',
+    name: 'Home',
     path: '/',
-    element: <SamplePage />
-  }
+    element: <HomePage />,
+    visible: true,
+  },
+  {
+    name: 'Symptom Assessment',
+    path: '/assessment',
+    element: <AssessmentPage />,
+    visible: true,
+  },
+  {
+    name: 'Analysis Results',
+    path: '/results',
+    element: <ResultsPage />,
+    visible: false,
+  },
+  {
+    name: 'Disease Details',
+    path: '/disease/:diseaseId',
+    element: <DiseaseDetailsPage />,
+    visible: false,
+  },
+  {
+    name: 'Find Hospitals',
+    path: '/hospitals',
+    element: <HospitalFinderPage />,
+    visible: true,
+  },
 ];
 
 export default routes;
