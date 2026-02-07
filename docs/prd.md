@@ -1,17 +1,17 @@
-# AI-Powered Healthcare Assessment and Care Navigation System Requirements Document
+# MediGuide AI - Healthcare Assessment and Care Navigation System Requirements Document
 
 ## 1. Application Overview
 
 ### 1.1 Application Name
-HealthCare Navigator
+MediGuide AI
 
 ### 1.2 Application Description
-An AI-powered healthcare application designed to help users understand their symptoms, identify possible health conditions, receive specialist recommendations, and find suitable hospitals. This system serves as a care navigation tool and does NOT provide medical diagnosis or prescriptions.
+An AI-powered healthcare application designed to help users understand their symptoms, identify possible health conditions, receive specialist recommendations, and find suitable hospitals in India. This system serves as a care navigation tool and does NOT provide medical diagnosis or prescriptions. The application supports assessment for all types of diseases and health conditions, not limited to dermatology.
 
 ### 1.3 Core Purpose
 - Help users understand their symptoms and possible conditions
 - Guide users to appropriate medical specialists
-- Recommend suitable hospitals based on location, budget, and preferences
+- Recommend suitable hospitals based on location, budget, insurance, and preferences
 - Provide health information and next-step guidance
 - Detect urgency levels and provide emergency alerts when necessary
 
@@ -32,10 +32,10 @@ An AI-powered healthcare application designed to help users understand their sym
 - Current medications (optional)
 
 #### 2.1.3 Location and Preferences
-- City or pincode
-- Budget range for treatment
+- City or State (India only)
+- Budget range for treatment (Low/Medium/High)
 - Insurance provider (optional)
-- Hospital preference (Government/Private/Both)
+- Hospital preference (Government/Private/Trust or Charitable)
 
 #### 2.1.4 Image Upload
 - Image upload capability for skin and visible diseases only
@@ -93,20 +93,24 @@ For each possible condition, provide:
 ### 2.6 Hospital Recommendation Module
 
 #### 2.6.1 Search Criteria
-- Location-based filtering (distance from user)
-- Budget range matching
-- Hospital type (Government/Private)
-- Insurance acceptance
+- Location-based filtering (City/State - India only)
+- Budget range matching (Low/Medium/High)
+- Hospital type (Government/Private/Trust or Charitable)
+- Insurance acceptance (Ayushman Bharat, State Government schemes, Private insurance, Cashless treatment, No insurance/Self-pay)
 - Specialist department availability
+- Emergency availability (Yes/No)
+- Diagnostic facilities available (Yes/No)
 
 #### 2.6.2 Hospital Information Display
 - Hospital name
-- Type (Government/Private)
+- Type (Government/Private/Trust or Charitable)
 - Distance from user location
-- Estimated cost range
+- Estimated cost range in INR (₹500–₹2,000, ₹2,000–₹10,000, ₹10,000+)
 - Contact information (phone, address)
 - Available departments
 - Insurance providers accepted
+- Emergency availability status
+- Diagnostic facilities available
 
 ## 3. Technical Architecture
 
@@ -176,14 +180,18 @@ For each possible condition, provide:
 #### hospitals
 - hospital_id (Primary Key)
 - hospital_name
-- type (Government/Private)
+- type (Government/Private/Trust or Charitable)
 - address
 - city
+- state
 - pincode
 - contact_number
 - latitude
 - longitude
-- cost_range
+- cost_range (Low/Medium/High)
+- cost_range_inr (e.g., ₹500–₹2,000)
+- emergency_available (Boolean)
+- diagnostic_facilities (Boolean)
 
 #### hospital_specialist_mapping
 - mapping_id (Primary Key)
@@ -193,7 +201,12 @@ For each possible condition, provide:
 #### insurance_providers
 - insurance_id (Primary Key)
 - provider_name
+- provider_type (Government/Private/Cashless/Self-pay)
+
+#### hospital_insurance_mapping
+- mapping_id (Primary Key)
 - hospital_id (Foreign Key)
+- insurance_id (Foreign Key)
 
 ### 4.2 Database Requirements
 - Include foreign key constraints
@@ -219,18 +232,19 @@ For each possible condition, provide:
 ### 5.4 Utility APIs
 - GET /api/symptoms/list - Get available symptoms
 - GET /api/specialists/list - Get specialist types
+- GET /api/insurance/list - Get insurance provider options
 
 ## 6. Safety and Ethical Guidelines
 
 ### 6.1 Medical Disclaimer
 - Display prominent disclaimer on all pages
 - Clarify this is NOT a diagnostic tool
-- State that results show \"possible conditions\" only
+- State that results show possible conditions only
 - Recommend professional medical consultation
 
 ### 6.2 Language and Terminology
-- Use \"possible condition\" instead of \"diagnosis\"
-- Use \"recommendation\" instead of \"prescription\"
+- Use possible condition instead of diagnosis
+- Use recommendation instead of prescription
 - Avoid definitive medical statements
 
 ### 6.3 Emergency Handling
@@ -250,6 +264,7 @@ For each possible condition, provide:
 - NO medication prescriptions
 - NO treatment plans
 - NO replacement for professional medical advice
+- NO individual doctor recommendations
 
 ## 7. Deliverables
 
@@ -278,7 +293,7 @@ This application is designed to be suitable for:
 ### 8.1 Medical Disclaimer Text
 Display the following disclaimer prominently:
 
-\"IMPORTANT MEDICAL DISCLAIMER: This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions. The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.\"
+IMPORTANT MEDICAL DISCLAIMER: This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions. The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
 
 ### 8.2 Emergency Red-Flag Symptoms
 Implement detection for critical symptoms including but not limited to:
@@ -296,3 +311,44 @@ Image upload and analysis is strictly limited to:
 - Visible wounds or injuries
 - External abnormalities
 - NOT for internal conditions or X-rays/scans
+
+### 8.4 India-Specific Requirements
+- All hospital data must be India-specific (no US or foreign hospitals)
+- Currency displayed in INR (₹) only
+- Insurance options include Ayushman Bharat and State Government schemes
+- Location filters limited to Indian cities and states
+- Cost ranges realistic for Indian healthcare system
+
+## 9. Changes Applied
+
+### 9.1 Application Name
+- Changed from DermaScan AI to MediGuide AI throughout the application
+- Updated to reflect support for all diseases, not limited to dermatology
+
+### 9.2 Currency and Pricing
+- Replaced all USD ($) references with INR (₹)
+- Updated cost ranges to realistic Indian healthcare pricing
+- Added cost_range_inr field in hospitals table
+
+### 9.3 Insurance System
+- Added insurance_providers table with provider_type field
+- Added hospital_insurance_mapping table for many-to-many relationship
+- Included Government schemes (Ayushman Bharat, State schemes)
+- Added Private insurance, Cashless treatment, and Self-pay options
+- Added Insurance Accepted filter on Find Hospitals page
+
+### 9.4 Hospital Filters
+- Added State field to hospitals table
+- Extended hospital type to include Trust or Charitable
+- Added emergency_available and diagnostic_facilities fields
+- Implemented filters for Location, Hospital Type, Budget Range, Emergency Availability, and Diagnostic Facilities
+
+### 9.5 Data Localization
+- Removed all non-Indian references
+- Ensured all examples and data are India-specific
+- Updated location fields to City/State format for India
+
+### 9.6 Database Updates
+- Added new tables: insurance_providers, hospital_insurance_mapping
+- Extended hospitals table with new fields: state, cost_range_inr, emergency_available, diagnostic_facilities
+- Maintained SQL relational database structure with proper foreign keys and normalization

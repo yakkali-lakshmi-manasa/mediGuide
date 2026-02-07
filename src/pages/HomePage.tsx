@@ -14,12 +14,11 @@ export default function HomePage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Heart className="h-12 w-12 text-primary" />
             <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-              HealthCare Navigator
+              MediGuide AI
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            AI-powered healthcare assessment and care navigation system to help you understand your
-            symptoms and find the right medical care
+            AI-powered healthcare assessment and care navigation system for all medical conditions
           </p>
         </div>
 

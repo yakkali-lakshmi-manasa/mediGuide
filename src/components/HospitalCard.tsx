@@ -2,18 +2,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { HospitalWithDistance } from '@/types';
-import { Building2, MapPin, Phone, DollarSign, Navigation } from 'lucide-react';
+import { Building2, MapPin, Phone, IndianRupee, Navigation, AlertCircle, Activity } from 'lucide-react';
 
 interface HospitalCardProps {
   hospital: HospitalWithDistance;
 }
+
+const insuranceLabels: Record<string, string> = {
+  ayushman_bharat: 'Ayushman Bharat',
+  state_scheme: 'State Scheme',
+  private_insurance: 'Private Insurance',
+  cashless: 'Cashless',
+  self_pay: 'Self-Pay',
+};
 
 export default function HospitalCard({ hospital }: HospitalCardProps) {
   const formatCostRange = () => {
     if (hospital.cost_range_min === 0 || hospital.cost_range_min === null) {
       return 'Free/Subsidized';
     }
-    return `$${hospital.cost_range_min?.toLocaleString()} - $${hospital.cost_range_max?.toLocaleString()}`;
+    return `₹${hospital.cost_range_min?.toLocaleString('en-IN')} - ₹${hospital.cost_range_max?.toLocaleString('en-IN')}`;
+  };
+
+  const getBudgetLabel = (range: string | null) => {
+    switch (range) {
+      case 'low':
+        return 'Low Budget';
+      case 'medium':
+        return 'Medium Budget';
+      case 'high':
+        return 'High Budget';
+      default:
+        return 'Budget Info N/A';
+    }
+  };
+
+  const getHospitalTypeLabel = (type: string) => {
+    switch (type) {
+      case 'government':
+        return 'Government';
+      case 'private':
+        return 'Private';
+      case 'trust':
+        return 'Trust/Charitable';
+      default:
+        return type;
+    }
   };
 
   return (
@@ -30,6 +64,11 @@ export default function HospitalCard({ hospital }: HospitalCardProps) {
                 <MapPin className="h-3 w-3" />
                 <span>{hospital.address}, {hospital.city}</span>
               </div>
+              {hospital.state && (
+                <div className="text-xs">
+                  <span>{hospital.state} - {hospital.pincode}</span>
+                </div>
+              )}
               {hospital.contact_number && (
                 <div className="flex items-center gap-1">
                   <Phone className="h-3 w-3" />
@@ -38,15 +77,22 @@ export default function HospitalCard({ hospital }: HospitalCardProps) {
               )}
             </CardDescription>
           </div>
-          <Badge variant={hospital.type === 'government' ? 'secondary' : 'default'}>
-            {hospital.type === 'government' ? 'Government' : 'Private'}
-          </Badge>
+          <div className="flex flex-col gap-2">
+            <Badge variant={hospital.type === 'government' ? 'secondary' : hospital.type === 'trust' ? 'outline' : 'default'}>
+              {getHospitalTypeLabel(hospital.type)}
+            </Badge>
+            {hospital.budget_range && (
+              <Badge variant="outline" className="text-xs">
+                {getBudgetLabel(hospital.budget_range)}
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-1 text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
+            <IndianRupee className="h-4 w-4" />
             <span>Cost Range:</span>
           </div>
           <span className="font-medium">{formatCostRange()}</span>
@@ -61,6 +107,21 @@ export default function HospitalCard({ hospital }: HospitalCardProps) {
             <span className="font-medium">{hospital.distance_km.toFixed(1)} km</span>
           </div>
         )}
+
+        <div className="flex flex-wrap gap-2 pt-2">
+          {hospital.emergency_available && (
+            <Badge variant="destructive" className="text-xs">
+              <AlertCircle className="mr-1 h-3 w-3" />
+              Emergency 24/7
+            </Badge>
+          )}
+          {hospital.diagnostic_facilities && (
+            <Badge variant="secondary" className="text-xs">
+              <Activity className="mr-1 h-3 w-3" />
+              Diagnostics
+            </Badge>
+          )}
+        </div>
 
         {hospital.available_specialists && hospital.available_specialists.length > 0 && (
           <div className="pt-2 border-t">
@@ -80,18 +141,18 @@ export default function HospitalCard({ hospital }: HospitalCardProps) {
           </div>
         )}
 
-        {hospital.insurance_providers && hospital.insurance_providers.length > 0 && (
+        {hospital.insurance_types && hospital.insurance_types.length > 0 && (
           <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground mb-1">Accepts Insurance:</p>
+            <p className="text-xs text-muted-foreground mb-1">Insurance Accepted:</p>
             <div className="flex flex-wrap gap-1">
-              {hospital.insurance_providers.slice(0, 2).map((provider, idx) => (
+              {hospital.insurance_types.slice(0, 3).map((type, idx) => (
                 <Badge key={idx} variant="secondary" className="text-xs">
-                  {provider}
+                  {insuranceLabels[type] || type}
                 </Badge>
               ))}
-              {hospital.insurance_providers.length > 2 && (
+              {hospital.insurance_types.length > 3 && (
                 <Badge variant="secondary" className="text-xs">
-                  +{hospital.insurance_providers.length - 2} more
+                  +{hospital.insurance_types.length - 3} more
                 </Badge>
               )}
             </div>

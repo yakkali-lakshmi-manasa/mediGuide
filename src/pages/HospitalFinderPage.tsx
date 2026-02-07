@@ -4,20 +4,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { searchHospitals, getAllSpecialists } from '@/db/api';
 import HospitalCard from '@/components/HospitalCard';
-import type { HospitalWithDistance, Specialist, HospitalType } from '@/types';
+import type { HospitalWithDistance, Specialist, HospitalType, BudgetRange, InsuranceType } from '@/types';
 import { Search, MapPin, Loader2 } from 'lucide-react';
 
 interface HospitalSearchForm {
   city: string;
+  state: string;
   pincode: string;
-  hospital_type: HospitalType | 'both';
+  hospital_type: HospitalType | 'all';
   specialist_id: string;
-  min_budget: string;
-  max_budget: string;
+  budget_range: BudgetRange | 'all';
+  insurance_type: InsuranceType | 'all';
+  emergency_available: boolean;
+  diagnostic_facilities: boolean;
 }
 
 export default function HospitalFinderPage() {
@@ -30,11 +34,14 @@ export default function HospitalFinderPage() {
   const form = useForm<HospitalSearchForm>({
     defaultValues: {
       city: '',
+      state: '',
       pincode: '',
-      hospital_type: 'both',
-      specialist_id: '',
-      min_budget: '',
-      max_budget: '',
+      hospital_type: 'all',
+      specialist_id: 'all',
+      budget_range: 'all',
+      insurance_type: 'all',
+      emergency_available: false,
+      diagnostic_facilities: false,
     },
   });
 
@@ -58,11 +65,14 @@ export default function HospitalFinderPage() {
     try {
       const searchParams = {
         city: data.city || undefined,
+        state: data.state || undefined,
         pincode: data.pincode || undefined,
-        hospital_type: data.hospital_type !== 'both' ? data.hospital_type : undefined,
+        hospital_type: data.hospital_type !== 'all' ? data.hospital_type : undefined,
         specialist_id: data.specialist_id && data.specialist_id !== 'all' ? data.specialist_id : undefined,
-        min_budget: data.min_budget ? Number(data.min_budget) : undefined,
-        max_budget: data.max_budget ? Number(data.max_budget) : undefined,
+        budget_range: data.budget_range !== 'all' ? data.budget_range : undefined,
+        insurance_type: data.insurance_type !== 'all' ? data.insurance_type : undefined,
+        emergency_available: data.emergency_available || undefined,
+        diagnostic_facilities: data.diagnostic_facilities || undefined,
       };
 
       const results = await searchHospitals(searchParams);
@@ -95,9 +105,9 @@ export default function HospitalFinderPage() {
     <div className="min-h-screen bg-background">
       <div className="@container max-w-7xl mx-auto px-4 py-8 space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Find Healthcare Facilities</h1>
+          <h1 className="text-3xl font-bold">Find Healthcare Facilities in India</h1>
           <p className="text-muted-foreground">
-            Search for hospitals and clinics based on your location, budget, and specialist needs
+            Search for hospitals and clinics across India based on location, budget, insurance, and facilities
           </p>
         </div>
 
@@ -114,7 +124,7 @@ export default function HospitalFinderPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid gap-4 @md:grid-cols-2">
+                <div className="grid gap-4 @md:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="city"
@@ -122,7 +132,21 @@ export default function HospitalFinderPage() {
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., New York" {...field} />
+                          <Input placeholder="e.g., Mumbai, Delhi" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Maharashtra" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -134,9 +158,9 @@ export default function HospitalFinderPage() {
                     name="pincode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pincode/ZIP Code</FormLabel>
+                        <FormLabel>Pincode</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., 10001" {...field} />
+                          <Input placeholder="e.g., 400001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -158,9 +182,62 @@ export default function HospitalFinderPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="both">Both Government & Private</SelectItem>
-                            <SelectItem value="government">Government Only</SelectItem>
-                            <SelectItem value="private">Private Only</SelectItem>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="government">Government</SelectItem>
+                            <SelectItem value="private">Private</SelectItem>
+                            <SelectItem value="trust">Trust / Charitable</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="budget_range"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Budget Range</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select budget" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="all">All Budgets</SelectItem>
+                            <SelectItem value="low">Low (₹0 - ₹5,000)</SelectItem>
+                            <SelectItem value="medium">Medium (₹5,000 - ₹30,000)</SelectItem>
+                            <SelectItem value="high">High (₹30,000+)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4 @md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="insurance_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Insurance Accepted</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select insurance" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="all">All Insurance Types</SelectItem>
+                            <SelectItem value="ayushman_bharat">Ayushman Bharat</SelectItem>
+                            <SelectItem value="state_scheme">State Government Schemes</SelectItem>
+                            <SelectItem value="private_insurance">Private Insurance</SelectItem>
+                            <SelectItem value="cashless">Cashless Treatment</SelectItem>
+                            <SelectItem value="self_pay">Self-Pay / No Insurance</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -201,28 +278,40 @@ export default function HospitalFinderPage() {
                 <div className="grid gap-4 @md:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="min_budget"
+                    name="emergency_available"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Minimum Budget ($)</FormLabel>
+                      <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} />
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Emergency Services Available
+                          </FormLabel>
+                        </div>
                       </FormItem>
                     )}
                   />
 
                   <FormField
                     control={form.control}
-                    name="max_budget"
+                    name="diagnostic_facilities"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Maximum Budget ($)</FormLabel>
+                      <FormItem className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Input type="number" placeholder="50000" {...field} />
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Diagnostic Facilities Available
+                          </FormLabel>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -288,7 +377,7 @@ export default function HospitalFinderPage() {
             <CardContent className="py-12 text-center">
               <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground">
-                Enter your search criteria above to find healthcare facilities
+                Enter your search criteria above to find healthcare facilities across India
               </p>
             </CardContent>
           </Card>

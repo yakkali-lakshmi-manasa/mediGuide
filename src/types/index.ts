@@ -14,7 +14,9 @@ export type Json =
   | Json[]
 
 export type UrgencyLevel = 'low' | 'medium' | 'high' | 'emergency';
-export type HospitalType = 'government' | 'private';
+export type HospitalType = 'government' | 'private' | 'trust';
+export type BudgetRange = 'low' | 'medium' | 'high';
+export type InsuranceType = 'ayushman_bharat' | 'state_scheme' | 'private_insurance' | 'cashless' | 'self_pay';
 export type SeverityLevel = 'mild' | 'moderate' | 'severe';
 export type GenderType = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
@@ -53,12 +55,16 @@ export interface Hospital {
   type: HospitalType;
   address: string;
   city: string;
+  state: string | null;
   pincode: string | null;
   contact_number: string | null;
   latitude: number | null;
   longitude: number | null;
   cost_range_min: number | null;
   cost_range_max: number | null;
+  budget_range: BudgetRange | null;
+  emergency_available: boolean;
+  diagnostic_facilities: boolean;
   created_at: string;
 }
 
@@ -127,11 +133,14 @@ export interface PossibleCondition {
 
 export interface HospitalSearchParams {
   city?: string;
+  state?: string;
   pincode?: string;
-  hospital_type?: HospitalType | 'both';
+  hospital_type?: HospitalType | 'all';
   specialist_id?: string;
-  min_budget?: number;
-  max_budget?: number;
+  budget_range?: BudgetRange;
+  insurance_type?: InsuranceType;
+  emergency_available?: boolean;
+  diagnostic_facilities?: boolean;
   latitude?: number;
   longitude?: number;
 }
@@ -139,7 +148,7 @@ export interface HospitalSearchParams {
 export interface HospitalWithDistance extends Hospital {
   distance_km?: number;
   available_specialists?: Specialist[];
-  insurance_providers?: string[];
+  insurance_types?: InsuranceType[];
 }
 
 export type Database = {

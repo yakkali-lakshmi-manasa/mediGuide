@@ -98,43 +98,46 @@ export const getTestsByDisease = async (diseaseId: string): Promise<DiagnosticTe
 export const searchHospitals = async (params: HospitalSearchParams): Promise<HospitalWithDistance[]> => {
   let query = supabase.from('hospitals').select(`
     *,
-    hospital_specialist_mapping(specialists(*)),
-    insurance_providers(provider_name)
+    hospital_specialist_mapping(specialists(*))
   `);
 
   if (params.city) {
     query = query.ilike('city', `%${params.city}%`);
   }
 
+  if (params.state) {
+    query = query.ilike('state', `%${params.state}%`);
+  }
+
   if (params.pincode) {
     query = query.eq('pincode', params.pincode);
   }
 
-  if (params.hospital_type && params.hospital_type !== 'both') {
+  if (params.hospital_type && params.hospital_type !== 'all') {
     query = query.eq('type', params.hospital_type);
   }
 
-  if (params.min_budget !== undefined) {
-    query = query.gte('cost_range_min', params.min_budget);
+  if (params.budget_range) {
+    query = query.eq('budget_range', params.budget_range);
   }
 
-  if (params.max_budget !== undefined) {
-    query = query.lte('cost_range_max', params.max_budget);
+  if (params.emergency_available) {
+    query = query.eq('emergency_available', true);
   }
 
-  query = query.order('hospital_name').limit(20);
+  if (params.diagnostic_facilities) {
+    query = query.eq('diagnostic_facilities', true);
+  }
+
+  query = query.order('hospital_name').limit(50);
 
   const { data, error } = await query;
 
   if (error) throw error;
 
-  const hospitals: HospitalWithDistance[] = (data || []).map((hospital: any) => {
+  let hospitals: HospitalWithDistance[] = (data || []).map((hospital: any) => {
     const specialists = hospital.hospital_specialist_mapping
       ?.map((mapping: any) => mapping.specialists)
-      .filter(Boolean) || [];
-    
-    const insuranceProviders = hospital.insurance_providers
-      ?.map((ins: any) => ins.provider_name)
       .filter(Boolean) || [];
 
     let distance_km: number | undefined;
@@ -155,15 +158,41 @@ export const searchHospitals = async (params: HospitalSearchParams): Promise<Hos
     return {
       ...hospital,
       available_specialists: specialists,
-      insurance_providers: insuranceProviders,
+      insurance_types: [],
       distance_km,
     };
   });
 
+  // Filter by specialist if specified
   if (params.specialist_id) {
-    return hospitals.filter(h => 
+    hospitals = hospitals.filter(h => 
       h.available_specialists?.some(s => s.specialist_id === params.specialist_id)
     );
+  }
+
+  // Fetch insurance types for each hospital
+  if (hospitals.length > 0) {
+    const hospitalIds = hospitals.map(h => h.hospital_id);
+    const { data: insuranceData } = await supabase
+      .from('hospital_insurance_types')
+      .select('hospital_id, insurance_type')
+      .in('hospital_id', hospitalIds);
+
+    if (insuranceData) {
+      hospitals = hospitals.map(hospital => ({
+        ...hospital,
+        insurance_types: insuranceData
+          .filter((ins: any) => ins.hospital_id === hospital.hospital_id)
+          .map((ins: any) => ins.insurance_type),
+      }));
+    }
+
+    // Filter by insurance type if specified
+    if (params.insurance_type) {
+      hospitals = hospitals.filter(h =>
+        h.insurance_types?.includes(params.insurance_type as any)
+      );
+    }
   }
 
   return hospitals.sort((a, b) => {
