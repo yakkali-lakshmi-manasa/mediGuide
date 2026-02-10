@@ -113,10 +113,14 @@ export default function AssessmentPage() {
   };
 
   const onSubmit = async (data: AssessmentFormData) => {
-    if (data.selectedSymptoms.length === 0 && !data.symptomDescription) {
+    // Validation: At least one symptom must be provided (predefined OR custom OR both)
+    const hasSelectedSymptoms = data.selectedSymptoms.length > 0;
+    const hasCustomSymptoms = data.symptomDescription.trim().length > 0;
+    
+    if (!hasSelectedSymptoms && !hasCustomSymptoms) {
       toast({
         title: 'No symptoms provided',
-        description: 'Please select symptoms or describe them',
+        description: 'Please provide at least one symptom to continue. You can select from the checklist, type your own symptoms, or use both.',
         variant: 'destructive',
       });
       return;
@@ -166,7 +170,7 @@ export default function AssessmentPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Symptom Assessment</h1>
           <p className="text-muted-foreground">
-            Provide detailed information about your symptoms for accurate analysis
+            Provide information about your symptoms using the checklist, free-text description, or both methods
           </p>
         </div>
 
@@ -176,9 +180,9 @@ export default function AssessmentPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Select Your Symptoms</CardTitle>
+                <CardTitle>Select Your Symptoms (Optional)</CardTitle>
                 <CardDescription>
-                  Choose all symptoms you are experiencing
+                  Choose symptoms from the list below, or skip to describe your own symptoms
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -187,6 +191,11 @@ export default function AssessmentPage() {
                   name="selectedSymptoms"
                   render={() => (
                     <FormItem>
+                      <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
+                        <p className="text-sm text-muted-foreground">
+                          💡 <strong>Flexible Input:</strong> You can select symptoms from the checklist, type your own symptoms below, or use both methods together.
+                        </p>
+                      </div>
                       <div className="grid gap-3 @md:grid-cols-2">
                         {symptoms.map((symptom) => (
                           <FormField
@@ -234,9 +243,9 @@ export default function AssessmentPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Symptom Details</CardTitle>
+                <CardTitle>Add Other Symptoms (Optional)</CardTitle>
                 <CardDescription>
-                  Provide additional information about your symptoms
+                  Describe any symptoms not listed above, or provide additional details
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -248,13 +257,13 @@ export default function AssessmentPage() {
                       <FormLabel>Describe Your Symptoms</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe any additional symptoms or details..."
+                          placeholder="Type any symptoms you're experiencing (e.g., 'sharp pain in lower back', 'feeling dizzy when standing up', 'red rash on arms')..."
                           className="min-h-24"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Include any details not covered in the symptom list
+                        You can describe symptoms in your own words. The AI will understand and normalize them.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -471,7 +480,7 @@ export default function AssessmentPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={loading || selectedSymptoms.length === 0}
+                disabled={loading}
                 className="flex-1"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

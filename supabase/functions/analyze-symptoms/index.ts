@@ -39,11 +39,57 @@ Deno.serve(async (req) => {
     const symptomInput = symptoms as SymptomInput;
     const profile = userProfile as UserProfile;
 
-    // Fetch symptom details
+    // Process custom symptoms from free-text description
+    let customSymptomIds: string[] = [];
+    let normalizedCustomSymptoms: Array<{ raw: string; normalized: string; matchedId?: string }> = [];
+    
+    if (symptomInput.symptom_description && symptomInput.symptom_description.trim().length > 0) {
+      // Split custom symptoms by common delimiters
+      const customSymptomTexts = symptomInput.symptom_description
+        .split(/[,;.\n]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      // Normalize and try to match custom symptoms to predefined ones
+      const { data: allSymptoms } = await supabaseClient
+        .from('symptoms')
+        .select('symptom_id, symptom_name');
+
+      for (const customText of customSymptomTexts) {
+        const normalized = customText.toLowerCase().trim();
+        
+        // Try to find a match in predefined symptoms (fuzzy matching)
+        const matchedSymptom = allSymptoms?.find(s => {
+          const symptomName = s.symptom_name.toLowerCase();
+          return symptomName.includes(normalized) || 
+                 normalized.includes(symptomName) ||
+                 // Check for common synonyms/variations
+                 (normalized.includes('pain') && symptomName.includes('pain')) ||
+                 (normalized.includes('ache') && symptomName.includes('pain')) ||
+                 (normalized.includes('hurt') && symptomName.includes('pain'));
+        });
+
+        normalizedCustomSymptoms.push({
+          raw: customText,
+          normalized: normalized,
+          matchedId: matchedSymptom?.symptom_id,
+        });
+
+        // If matched, add to symptom_ids for analysis
+        if (matchedSymptom && !symptomInput.symptom_ids.includes(matchedSymptom.symptom_id)) {
+          customSymptomIds.push(matchedSymptom.symptom_id);
+        }
+      }
+    }
+
+    // Combine predefined and matched custom symptoms
+    const allSymptomIds = [...symptomInput.symptom_ids, ...customSymptomIds];
+
+    // Fetch symptom details for all symptoms (predefined + matched custom)
     const { data: symptomData, error: symptomError } = await supabaseClient
       .from('symptoms')
       .select('*')
-      .in('symptom_id', symptomInput.symptom_ids);
+      .in('symptom_id', allSymptomIds);
 
     if (symptomError) throw symptomError;
 
@@ -51,11 +97,11 @@ Deno.serve(async (req) => {
     const redFlags = symptomData?.filter(s => s.is_red_flag) || [];
     const hasEmergency = redFlags.length > 0 || symptomInput.severity === 'severe';
 
-    // Fetch possible diseases based on symptoms
+    // Fetch possible diseases based on all symptoms (predefined + matched custom)
     const { data: mappingData, error: mappingError } = await supabaseClient
       .from('disease_symptom_mapping')
       .select('disease_id, weight, diseases(*)')
-      .in('symptom_id', symptomInput.symptom_ids);
+      .in('symptom_id', allSymptomIds);
 
     if (mappingError) throw mappingError;
 
@@ -96,10 +142,20 @@ Deno.serve(async (req) => {
           .select('diagnostic_tests(*)')
           .eq('disease_id', disease.disease_id);
 
-        const maxScore = symptomInput.symptom_ids.length;
+        const maxScore = allSymptomIds.length;
         const confidenceScore = Math.min((score / maxScore) * 100, 95);
 
-        let reasoning = `Based on ${matchCount} matching symptom(s). `;
+        let reasoning = `Based on ${matchCount} matching symptom(s)`;
+        
+        // Add info about custom symptoms if any were matched
+        const customMatchCount = customSymptomIds.filter(id => 
+          mappingData?.some(m => m.disease_id === disease.disease_id && allSymptomIds.includes(id))
+        ).length;
+        
+        if (customMatchCount > 0) {
+          reasoning += ` (including ${customMatchCount} from your description)`;
+        }
+        reasoning += '. ';
         
         if (disease.is_chronic) {
           reasoning += 'This is a chronic condition. ';
@@ -154,6 +210,8 @@ Deno.serve(async (req) => {
       recommended_specialists: Array.from(allSpecialists.values()),
       recommended_tests: Array.from(allTests.values()),
       emergency_alert: urgencyLevel === 'emergency',
+      custom_symptoms_processed: normalizedCustomSymptoms.length,
+      custom_symptoms_matched: customSymptomIds.length,
     };
 
     return new Response(JSON.stringify(analysisResult), {
