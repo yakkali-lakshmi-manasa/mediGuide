@@ -14,11 +14,14 @@ export default function HomePage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Heart className="h-12 w-12 text-primary" />
             <h1 className="text-4xl md:text-5xl font-bold gradient-text">
-              MediGuide AI
+              MediGuide
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            AI-powered healthcare assessment and care navigation system for all medical conditions
+            Healthcare information and care navigation system using Common Conditions Knowledge Base
+          </p>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+            Guidance-level suggestions for symptom patterns • Not a diagnostic tool
           </p>
         </div>
 
@@ -34,7 +37,7 @@ export default function HomePage() {
               </div>
               <CardTitle>Symptom Assessment</CardTitle>
               <CardDescription>
-                Describe your symptoms and get AI-powered analysis of possible conditions
+                Describe your symptoms and receive guidance-level suggestions from our Common Conditions Knowledge Base
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -49,9 +52,9 @@ export default function HomePage() {
               <div className="p-3 bg-secondary/10 rounded-lg w-fit mb-2">
                 <Stethoscope className="h-8 w-8 text-secondary" />
               </div>
-              <CardTitle>Specialist Recommendations</CardTitle>
+              <CardTitle>Specialist Guidance</CardTitle>
               <CardDescription>
-                Get recommendations for appropriate medical specialists based on your symptoms
+                Get suggestions for appropriate types of medical specialists based on symptom patterns
               </CardDescription>
             </CardHeader>
             <CardContent>

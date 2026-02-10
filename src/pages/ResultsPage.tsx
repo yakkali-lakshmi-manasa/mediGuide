@@ -66,9 +66,9 @@ export default function ResultsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Analysis Results</h1>
+            <h1 className="text-3xl font-bold">Symptom Assessment Results</h1>
             <p className="text-muted-foreground">
-              Based on your symptoms, here are the possible conditions
+              Guidance-level suggestions based on symptom patterns
             </p>
           </div>
         </div>
@@ -81,8 +81,8 @@ export default function ResultsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl">Overall Assessment</CardTitle>
-                <CardDescription>Urgency level and next steps</CardDescription>
+                <CardTitle className="text-xl">Overall Guidance Assessment</CardTitle>
+                <CardDescription>Suggested urgency level for seeking medical care</CardDescription>
               </div>
               <Badge className={getUrgencyColor(analysisResult.urgency_level)} variant="default">
                 <AlertCircle className="mr-1 h-4 w-4" />
@@ -107,17 +107,23 @@ export default function ResultsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl font-bold">Possible Conditions</h2>
+            <h2 className="text-2xl font-bold">Possible Common Conditions (Not a Diagnosis)</h2>
           </div>
-          <p className="text-muted-foreground">
-            These are potential conditions based on your symptoms. This is NOT a diagnosis.
-            Always consult a healthcare professional for proper evaluation.
-          </p>
+          <Card className="bg-accent/50 border-accent">
+            <CardContent className="py-3">
+              <p className="text-sm">
+                <strong>⚠️ Important:</strong> The following are possible common conditions based on symptom 
+                pattern matching from our Common Conditions Knowledge Base. <strong>This is NOT a medical diagnosis.</strong> 
+                These suggestions are for informational and navigation guidance only. Always consult a qualified 
+                healthcare professional for proper medical evaluation and diagnosis.
+              </p>
+            </CardContent>
+          </Card>
           
           {analysisResult.possible_conditions.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No specific conditions identified. Please consult a healthcare professional for evaluation.
+                No specific condition patterns identified. Please consult a healthcare professional for proper evaluation.
               </CardContent>
             </Card>
           ) : (

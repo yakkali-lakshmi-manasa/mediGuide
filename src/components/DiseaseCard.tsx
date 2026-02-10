@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import type { PossibleCondition } from '@/types';
-import { AlertCircle, TrendingUp, Activity } from 'lucide-react';
+import { AlertCircle, TrendingUp, Activity, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DiseaseCardProps {
   condition: PossibleCondition;
@@ -47,20 +48,29 @@ export default function DiseaseCard({ condition }: DiseaseCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Disclaimer Alert */}
+        <Alert className="bg-muted/50 border-muted-foreground/20">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            <strong>Guidance Only:</strong> This is a possible common condition based on symptom patterns, 
+            not a medical diagnosis. Consult a healthcare professional for proper evaluation.
+          </AlertDescription>
+        </Alert>
+
         <div>
           <p className="text-sm text-muted-foreground mb-2">
             <Activity className="inline mr-1 h-4 w-4" />
-            Analysis Reasoning:
+            Pattern Matching Reasoning:
           </p>
           <p className="text-sm">{reasoning}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {disease.is_chronic && (
-            <Badge variant="secondary">Chronic Condition</Badge>
+            <Badge variant="secondary">Typically Chronic</Badge>
           )}
           {disease.is_infectious && (
-            <Badge variant="secondary">Infectious</Badge>
+            <Badge variant="secondary">Typically Infectious</Badge>
           )}
         </div>
 
@@ -69,7 +79,7 @@ export default function DiseaseCard({ condition }: DiseaseCardProps) {
           className="w-full"
           onClick={() => navigate(`/disease/${disease.disease_id}`)}
         >
-          View Detailed Information
+          View General Information
         </Button>
       </CardContent>
     </Card>

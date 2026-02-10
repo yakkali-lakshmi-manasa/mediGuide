@@ -60,8 +60,8 @@ export default function DiseaseDetailsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Disease Not Found</CardTitle>
-            <CardDescription>The requested disease information could not be found</CardDescription>
+            <CardTitle>Condition Information Not Found</CardTitle>
+            <CardDescription>The requested condition information could not be found</CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => navigate('/')} className="w-full">
@@ -95,7 +95,7 @@ export default function DiseaseDetailsPage() {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{disease.disease_name}</h1>
-            <p className="text-muted-foreground">Detailed information about this condition</p>
+            <p className="text-muted-foreground">General information from Common Conditions Knowledge Base</p>
           </div>
           <Badge className={getUrgencyColor(disease.urgency_level)}>
             <AlertCircle className="mr-1 h-3 w-3" />
@@ -104,11 +104,14 @@ export default function DiseaseDetailsPage() {
         </div>
 
         <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-2">
             <p className="text-sm font-medium">
-              ⚠️ <strong>Important:</strong> This information is for educational purposes only and
-              does NOT constitute medical advice or diagnosis. Always consult qualified healthcare
-              professionals for proper evaluation and treatment.
+              ⚠️ <strong>Not a Medical Diagnosis:</strong> This information is from our Common Conditions 
+              Knowledge Base and is provided for educational and guidance purposes only.
+            </p>
+            <p className="text-sm">
+              This does NOT constitute medical advice, diagnosis, or treatment recommendations. 
+              Always consult qualified healthcare professionals for proper medical evaluation, diagnosis, and treatment.
             </p>
           </CardContent>
         </Card>
@@ -117,7 +120,7 @@ export default function DiseaseDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              Overview
+              General Overview
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -132,19 +135,19 @@ export default function DiseaseDetailsPage() {
               {disease.is_chronic && (
                 <Badge variant="secondary">
                   <Clock className="mr-1 h-3 w-3" />
-                  Chronic Condition
+                  Typically Chronic
                 </Badge>
               )}
               {disease.is_infectious && (
                 <Badge variant="secondary">
                   <Biohazard className="mr-1 h-3 w-3" />
-                  Infectious
+                  Typically Infectious
                 </Badge>
               )}
               {disease.requires_image_analysis && (
                 <Badge variant="secondary">
                   <Shield className="mr-1 h-3 w-3" />
-                  Visual Assessment Helpful
+                  Visual Symptoms May Be Present
                 </Badge>
               )}
             </div>
@@ -154,7 +157,8 @@ export default function DiseaseDetailsPage() {
         {disease.causes && (
           <Card>
             <CardHeader>
-              <CardTitle>Common Causes</CardTitle>
+              <CardTitle>General Information About Causes</CardTitle>
+              <CardDescription>Common factors that may contribute to this condition</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">{disease.causes}</p>
@@ -165,7 +169,8 @@ export default function DiseaseDetailsPage() {
         {disease.risk_factors && (
           <Card>
             <CardHeader>
-              <CardTitle>Risk Factors</CardTitle>
+              <CardTitle>General Risk Factor Information</CardTitle>
+              <CardDescription>Factors that may increase likelihood of this condition</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">{disease.risk_factors}</p>

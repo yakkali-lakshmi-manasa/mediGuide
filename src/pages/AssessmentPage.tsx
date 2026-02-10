@@ -168,9 +168,10 @@ export default function AssessmentPage() {
     <div className="min-h-screen bg-background">
       <div className="@container max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Symptom Assessment</h1>
+          <h1 className="text-3xl font-bold">Symptom Assessment for Guidance</h1>
           <p className="text-muted-foreground">
-            Provide information about your symptoms using the checklist, free-text description, or both methods
+            Provide information about your symptoms to receive guidance-level suggestions from our 
+            Common Conditions Knowledge Base. This is not a diagnostic tool.
           </p>
         </div>
 

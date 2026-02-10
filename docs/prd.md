@@ -6,10 +6,10 @@
 MediGuide AI
 
 ### 1.2 Application Description
-An AI-powered healthcare application designed to help users understand their symptoms, identify possible health conditions, receive specialist recommendations, and find suitable hospitals in India. This system serves as a care navigation tool and does NOT provide medical diagnosis or prescriptions. The application supports assessment for all types of diseases and health conditions, not limited to dermatology.
+An AI-powered healthcare application designed to help users understand their symptoms, identify possible common health conditions, receive specialist recommendations, and find suitable hospitals in India. This system serves as a care navigation tool and does NOT provide medical diagnosis or prescriptions. The application supports assessment for all types of symptoms and health conditions, not limited to dermatology.
 
 ### 1.3 Core Purpose
-- Help users understand their symptoms and possible conditions
+- Help users understand their symptoms and possible common conditions
 - Guide users to appropriate medical specialists
 - Recommend suitable hospitals based on location, budget, insurance, and preferences
 - Provide health information and next-step guidance
@@ -57,9 +57,9 @@ An AI-powered healthcare application designed to help users understand their sym
 - If image is NOT provided: System functions normally using symptoms only
 - Support common image formats (JPG, PNG)
 - Image size validation
-- Applicable for skin and visible diseases only
+- Applicable for skin and visible conditions only
 
-### 2.2 Disease Analysis Module
+### 2.2 Symptom Analysis Module
 
 #### 2.2.1 Symptom-Based Analysis
 **Combined Symptom Processing:**
@@ -68,7 +68,7 @@ An AI-powered healthcare application designed to help users understand their sym
 - Treat both predefined and custom symptoms with equal importance
 - Do NOT prioritize predefined symptoms over custom symptoms
 - Process user symptoms using ML and rule-based logic
-- Generate top 3-5 possible conditions
+- Generate top 3-5 possible common conditions
 - Provide confidence scores for each condition
 - Explain reasoning behind each possible condition
 
@@ -76,9 +76,9 @@ An AI-powered healthcare application designed to help users understand their sym
 - Explicitly incorporate user-reported severity into condition generation
 - If severity = Mild:
   - PRIORITIZE common, self-limiting conditions
-  - DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified by symptoms
+  - DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific conditions unless strongly justified by symptoms
   - Examples:
-    - Mild fever + headache + body pain → Allow: Viral Fever, Influenza, Tension Headache; Suppress: Pneumonia, Hypertension, Cardiac conditions
+    - Mild fever + headache + body pain → Allow: Common viral fever, Common cold, Fatigue-related headache; Suppress: Pneumonia, Hypertension, Cardiac conditions
 
 **Symptom-Condition Minimum Match Rule:**
 - Each condition must meet a minimum symptom relevance threshold
@@ -86,14 +86,14 @@ An AI-powered healthcare application designed to help users understand their sym
   - At least one PRIMARY symptom matches, OR
   - Two or more SECONDARY symptoms match
 - Examples:
-  - Gastroenteritis requires ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
-  - Pneumonia requires ≥1 respiratory symptom (cough, breathlessness, chest pain)
-  - Hypertension must NOT be suggested unless BP-related symptoms OR user history indicates it
+  - Gastroenteritis-like symptoms require ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
+  - Pneumonia-like symptoms require ≥1 respiratory symptom (cough, breathlessness, chest pain)
+  - Hypertension-related conditions must NOT be suggested unless BP-related symptoms OR user history indicates it
 
 **Fever-Specific Logic:**
 - Fever should increase likelihood of:
   - Viral infections
-  - Influenza
+  - Influenza-like conditions
 - Fever should DECREASE likelihood of:
   - Purely chronic conditions (e.g., hypertension, migraine-only cases)
 
@@ -106,18 +106,34 @@ An AI-powered healthcare application designed to help users understand their sym
 - CNN-based image analysis for skin conditions (if image provided)
 - Combine image analysis with symptom data
 - Multimodal fusion for enhanced accuracy
-- Only applicable for skin and visible diseases
+- Only applicable for skin and visible conditions
 - System functions without image if not provided
 
-### 2.3 Disease Information Module
+### 2.3 Common Conditions Knowledge Base Module
 
-For each possible condition, provide:
+**Important Clarification:**
+- This is a Common Conditions Knowledge Base, NOT a disease or diagnosis database
+- Used ONLY for symptom pattern matching and guidance-level condition suggestions
+- All outputs must be labeled as: Possible common conditions (not a diagnosis)
+- Disclaimers must be displayed wherever conditions are shown
+
+For each possible common condition, provide:
 - Brief description
 - Common causes
 - Risk factors
 - Classification (acute vs chronic)
 - Transmission type (infectious vs non-infectious)
 - General information about the condition
+
+**Examples of Common Conditions:**
+- Common viral fever
+- Common cold
+- Dehydration
+- Fatigue-related headache
+- Tension headache
+- Influenza-like symptoms
+- Gastroenteritis-like symptoms
+- Minor skin irritations
 
 ### 2.4 Next-Step and Urgency Detection
 
@@ -141,7 +157,7 @@ For each possible condition, provide:
 ### 2.5 Specialist Recommendation Module
 
 **Specialist Recommendation Control:**
-- Map possible conditions to appropriate medical specialties
+- Map possible common conditions to appropriate medical specialties
 - Recommend specialist type only (no individual doctor names)
 - Explain why specific specialist is recommended
 - Support multiple specialist recommendations if needed
@@ -186,11 +202,14 @@ For each possible condition, provide:
 ### 3.3 Database
 - SQL database (PostgreSQL or MySQL)
 - Relational database structure
+- Separate databases for:
+  - Common Conditions Knowledge Base
+  - Hospital Information Database
 
 ### 3.4 Machine Learning Components
 - Symptom analysis model (ML + rule-based)
 - Free-text symptom normalization (NLP)
-- CNN-based image classification for skin diseases (optional)
+- CNN-based image classification for skin conditions (optional)
 - Multimodal fusion layer for combined analysis
 - Severity-aware filtering logic
 - Symptom-condition matching threshold system
@@ -253,33 +272,33 @@ CREATE TABLE user_symptom_input (
 );
 ```
 
-#### diseases
+#### common_conditions (Knowledge Base - NOT diagnosis database)
 ```sql
-CREATE TABLE diseases (
-    disease_id INT PRIMARY KEY AUTO_INCREMENT,
-    disease_name VARCHAR(255) NOT NULL,
+CREATE TABLE common_conditions (
+    condition_id INT PRIMARY KEY AUTO_INCREMENT,
+    condition_name VARCHAR(255) NOT NULL,
     description TEXT,
-    causes TEXT,
+    common_causes TEXT,
     risk_factors TEXT,
     is_chronic BOOLEAN,
     is_infectious BOOLEAN,
     urgency_level VARCHAR(20),
     risk_level VARCHAR(20),
-    INDEX idx_disease_name (disease_name)
+    INDEX idx_condition_name (condition_name)
 );
 ```
 
-#### disease_symptom_mapping
+#### condition_symptom_mapping
 ```sql
-CREATE TABLE disease_symptom_mapping (
+CREATE TABLE condition_symptom_mapping (
     mapping_id INT PRIMARY KEY AUTO_INCREMENT,
-    disease_id INT,
+    condition_id INT,
     symptom_id INT,
     weight DECIMAL(3,2),
     symptom_priority VARCHAR(20),
-    FOREIGN KEY (disease_id) REFERENCES diseases(disease_id),
+    FOREIGN KEY (condition_id) REFERENCES common_conditions(condition_id),
     FOREIGN KEY (symptom_id) REFERENCES symptoms(symptom_id),
-    INDEX idx_disease_id (disease_id),
+    INDEX idx_condition_id (condition_id),
     INDEX idx_symptom_id (symptom_id)
 );
 ```
@@ -294,20 +313,20 @@ CREATE TABLE specialists (
 );
 ```
 
-#### disease_specialist_mapping
+#### condition_specialist_mapping
 ```sql
-CREATE TABLE disease_specialist_mapping (
+CREATE TABLE condition_specialist_mapping (
     mapping_id INT PRIMARY KEY AUTO_INCREMENT,
-    disease_id INT,
+    condition_id INT,
     specialist_id INT,
-    FOREIGN KEY (disease_id) REFERENCES diseases(disease_id),
+    FOREIGN KEY (condition_id) REFERENCES common_conditions(condition_id),
     FOREIGN KEY (specialist_id) REFERENCES specialists(specialist_id),
-    INDEX idx_disease_id (disease_id),
+    INDEX idx_condition_id (condition_id),
     INDEX idx_specialist_id (specialist_id)
 );
 ```
 
-#### hospitals
+#### hospitals (Separate Database)
 ```sql
 CREATE TABLE hospitals (
     hospital_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -382,19 +401,18 @@ INSERT INTO symptoms (symptom_name, category, description, symptom_type) VALUES
 ('Breathlessness', 'Respiratory', 'Difficulty breathing', 'PRIMARY'),
 ('Chest Pain', 'Cardiovascular', 'Pain in chest region', 'PRIMARY');
 
--- Sample diseases
-INSERT INTO diseases (disease_name, description, causes, risk_factors, is_chronic, is_infectious, urgency_level, risk_level) VALUES
+-- Sample common conditions (Knowledge Base - NOT diagnosis database)
+INSERT INTO common_conditions (condition_name, description, common_causes, risk_factors, is_chronic, is_infectious, urgency_level, risk_level) VALUES
 ('Common Cold', 'Viral infection of upper respiratory tract', 'Rhinovirus', 'Weakened immunity', FALSE, TRUE, 'Low', 'Low'),
-('Viral Fever', 'Fever caused by viral infection', 'Various viruses', 'Weakened immunity, seasonal changes', FALSE, TRUE, 'Low', 'Low'),
-('Influenza', 'Flu caused by influenza virus', 'Influenza virus', 'Seasonal exposure, weakened immunity', FALSE, TRUE, 'Low', 'Low'),
+('Common Viral Fever', 'Fever caused by viral infection', 'Various viruses', 'Weakened immunity, seasonal changes', FALSE, TRUE, 'Low', 'Low'),
+('Influenza-like Symptoms', 'Flu-like symptoms caused by influenza virus', 'Influenza virus', 'Seasonal exposure, weakened immunity', FALSE, TRUE, 'Low', 'Low'),
+('Fatigue-related Headache', 'Headache caused by tiredness or lack of rest', 'Fatigue, stress, poor sleep', 'Stress, overwork', FALSE, FALSE, 'Low', 'Low'),
 ('Tension Headache', 'Headache caused by muscle tension', 'Stress, poor posture', 'Stress, fatigue', FALSE, FALSE, 'Low', 'Low'),
-('Migraine', 'Severe headache disorder', 'Neurological factors', 'Stress, genetics', TRUE, FALSE, 'Medium', 'Medium'),
-('Pneumonia', 'Lung infection', 'Bacterial or viral infection', 'Weakened immunity, smoking', FALSE, TRUE, 'High', 'High'),
-('Hypertension', 'High blood pressure', 'Multiple factors', 'Age, obesity, family history', TRUE, FALSE, 'Medium', 'Medium'),
-('Gastroenteritis', 'Inflammation of stomach and intestines', 'Viral or bacterial infection', 'Contaminated food or water', FALSE, TRUE, 'Medium', 'Medium');
+('Dehydration', 'Insufficient fluid intake', 'Low water intake, excessive sweating', 'Hot weather, physical activity', FALSE, FALSE, 'Low', 'Low'),
+('Gastroenteritis-like Symptoms', 'Inflammation of stomach and intestines', 'Viral or bacterial infection', 'Contaminated food or water', FALSE, TRUE, 'Medium', 'Medium');
 
--- Sample disease-symptom mappings
-INSERT INTO disease_symptom_mapping (disease_id, symptom_id, weight, symptom_priority) VALUES
+-- Sample condition-symptom mappings
+INSERT INTO condition_symptom_mapping (condition_id, symptom_id, weight, symptom_priority) VALUES
 (1, 1, 0.8, 'PRIMARY'),
 (1, 2, 0.6, 'SECONDARY'),
 (1, 3, 0.9, 'PRIMARY'),
@@ -405,12 +423,13 @@ INSERT INTO disease_symptom_mapping (disease_id, symptom_id, weight, symptom_pri
 (3, 3, 0.7, 'PRIMARY'),
 (3, 4, 0.6, 'SECONDARY'),
 (4, 2, 0.9, 'PRIMARY'),
-(6, 3, 0.9, 'PRIMARY'),
-(6, 9, 0.8, 'PRIMARY'),
-(6, 10, 0.7, 'PRIMARY'),
-(8, 5, 0.9, 'PRIMARY'),
-(8, 7, 0.9, 'PRIMARY'),
-(8, 8, 0.9, 'PRIMARY');
+(4, 4, 0.8, 'PRIMARY'),
+(5, 2, 0.9, 'PRIMARY'),
+(6, 4, 0.9, 'PRIMARY'),
+(6, 2, 0.7, 'SECONDARY'),
+(7, 5, 0.9, 'PRIMARY'),
+(7, 7, 0.9, 'PRIMARY'),
+(7, 8, 0.9, 'PRIMARY');
 
 -- Sample specialists
 INSERT INTO specialists (specialist_name, description) VALUES
@@ -447,7 +466,7 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - POST /api/analysis/combined - Combined multimodal analysis (symptoms + image if provided)
 
 ### 5.3 Information APIs
-- GET /api/diseases/{disease_id} - Get disease information
+- GET /api/conditions/{condition_id} - Get common condition information (NOT diagnosis)
 - GET /api/specialists/recommend - Get specialist recommendations
 - GET /api/hospitals/search - Search hospitals by criteria
 
@@ -496,13 +515,13 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 #### Step 2: Apply Severity-Aware Filtering
 **If severity = Mild:**
 - PRIORITIZE common, self-limiting conditions
-- DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified
+- DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific conditions unless strongly justified
 - Examples:
-  - Mild fever + headache + body pain → Allow: Viral Fever, Influenza, Tension Headache
-  - Mild fever + headache + body pain → Suppress: Pneumonia, Hypertension, Cardiac conditions
+  - Mild fever + headache + body pain → Allow: Common viral fever, Common cold, Fatigue-related headache
+  - Mild fever + headache + body pain → Suppress: Pneumonia-like symptoms, Hypertension-related conditions, Cardiac conditions
 
 **If severity = Moderate or Severe:**
-- Allow broader range of conditions including serious diseases
+- Allow broader range of conditions including more serious conditions
 - Apply standard matching logic
 
 #### Step 3: Apply Symptom-Condition Minimum Match Rule
@@ -511,18 +530,18 @@ For each candidate condition, verify:
 - Two or more SECONDARY symptoms match
 
 **Examples:**
-- Gastroenteritis: Requires ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
-- Pneumonia: Requires ≥1 respiratory symptom (cough, breathlessness, chest pain)
-- Hypertension: Must NOT be suggested unless BP-related symptoms OR user history indicates it
+- Gastroenteritis-like symptoms: Requires ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
+- Pneumonia-like symptoms: Requires ≥1 respiratory symptom (cough, breathlessness, chest pain)
+- Hypertension-related conditions: Must NOT be suggested unless BP-related symptoms OR user history indicates it
 
 #### Step 4: Apply Fever-Specific Logic
 **If fever is present:**
 - INCREASE likelihood of:
   - Viral infections
-  - Influenza
-  - Infectious diseases
+  - Influenza-like symptoms
+  - Infectious conditions
 - DECREASE likelihood of:
-  - Purely chronic conditions (e.g., hypertension, migraine-only cases)
+  - Purely chronic conditions (e.g., hypertension-related, migraine-only cases)
 
 #### Step 5: Confidence Score Adjustment
 **For mild severity:**
@@ -538,6 +557,8 @@ For each candidate condition, verify:
 - Output top 3-5 conditions for moderate/severe severity
 - Provide confidence scores for each condition
 - Explain reasoning behind each possible condition
+- **Label all outputs as: Possible common conditions (not a diagnosis)**
+- **Display disclaimer: This is guidance-level information only, not a medical diagnosis**
 
 #### Step 7: Safety Override
 - Emergency conditions may still appear ONLY IF strong symptom indicators exist
@@ -570,11 +591,13 @@ For each candidate condition, verify:
   - Severity: mild
 - Expected Output:
   - Narrow condition list (2-3 items)
-  - Conditions: Viral Fever, Influenza, Tension Headache
+  - Conditions: Common viral fever, Common cold, Fatigue-related headache
   - Confidence scores: ≤60%
   - Specialist: General Physician only
-  - No chronic or unrelated diseases
+  - No chronic or unrelated conditions
   - Mild guidance-focused output
+  - **Label: Possible common conditions (not a diagnosis)**
+  - **Disclaimer displayed**
 
 **Example 2: Moderate Severity Input**
 - Input:
@@ -582,10 +605,12 @@ For each candidate condition, verify:
   - Severity: moderate
 - Expected Output:
   - Broader condition list (3-5 items)
-  - Conditions: Pneumonia, Bronchitis, Respiratory Infection
+  - Conditions: Pneumonia-like symptoms, Bronchitis-like symptoms, Respiratory infection
   - Confidence scores: Standard range
   - Specialist: Pulmonologist
   - Appropriate serious conditions included
+  - **Label: Possible common conditions (not a diagnosis)**
+  - **Disclaimer displayed**
 
 **Example 3: Emergency Symptoms**
 - Input:
@@ -596,19 +621,23 @@ For each candidate condition, verify:
   - High-risk conditions included
   - Immediate medical attention recommended
   - Emergency contact information provided
+  - **Label: Possible common conditions (not a diagnosis)**
+  - **Disclaimer displayed**
 
 ## 7. Safety and Ethical Guidelines
 
 ### 7.1 Medical Disclaimer
 - Display prominent disclaimer on all pages
 - Clarify this is NOT a diagnostic tool
-- State that results show possible conditions only
+- State that results show possible common conditions only (NOT diagnosis)
 - Recommend professional medical consultation
+- **Disclaimer must appear wherever conditions are shown**
 
 ### 7.2 Language and Terminology
-- Use possible condition instead of diagnosis
+- Use possible common condition instead of diagnosis or disease
 - Use recommendation instead of prescription
 - Avoid definitive medical statements
+- Always label outputs as: Possible common conditions (not a diagnosis)
 
 ### 7.3 Emergency Handling
 - Implement red-flag symptom detection
@@ -630,6 +659,7 @@ For each candidate condition, verify:
 - NO treatment plans
 - NO replacement for professional medical advice
 - NO individual doctor recommendations
+- Common Conditions Knowledge Base is for guidance only
 
 ## 8. UI/UX Requirements
 
@@ -684,13 +714,20 @@ Apply theme consistently across all UI components:
 - Load saved theme preference on application startup
 - Detect system preference using prefers-color-scheme media query
 
-### 8.3 Responsive Design
+### 8.3 Disclaimer Display Requirements
+- Display disclaimer prominently on all pages showing condition information
+- Use clear, readable font size
+- Position disclaimer above or near condition results
+- **Required text:** Possible common conditions (not a diagnosis)
+- Include full medical disclaimer text in visible location
+
+### 8.4 Responsive Design
 - Mobile-first approach
 - Breakpoints for mobile, tablet, and desktop
 - Touch-friendly interface elements
 - Optimized layouts for different screen sizes
 
-### 8.4 Accessibility
+### 8.5 Accessibility
 - WCAG 2.1 Level AA compliance
 - Keyboard navigation support
 - Screen reader compatibility
@@ -710,6 +747,7 @@ Apply theme consistently across all UI components:
 - Sample data for testing
 - Theme system implementation (CSS variables, localStorage integration)
 - Responsive navigation bar component
+- Disclaimer display components
 
 ### 9.2 Documentation
 - API documentation
@@ -719,6 +757,7 @@ Apply theme consistently across all UI components:
 - Developer documentation
 - Decision logic explanation document
 - Theme system documentation
+- Common Conditions Knowledge Base documentation
 
 ### 9.3 Project Suitability
 This application is designed to be suitable for:
@@ -731,9 +770,16 @@ This application is designed to be suitable for:
 ### 10.1 Medical Disclaimer Text
 Display the following disclaimer prominently:
 
-IMPORTANT MEDICAL DISCLAIMER: This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions. The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
+IMPORTANT MEDICAL DISCLAIMER: This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions. The information provided represents possible common conditions based on symptoms and should not be considered as medical advice or diagnosis. The Common Conditions Knowledge Base is for guidance purposes only and is not a disease or diagnosis database. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
 
-### 10.2 Emergency Red-Flag Symptoms
+### 10.2 Condition Display Disclaimer
+Display the following text wherever conditions are shown:
+
+Possible common conditions (not a diagnosis)
+
+This is guidance-level information only. Please consult a healthcare professional for proper diagnosis.
+
+### 10.3 Emergency Red-Flag Symptoms
 Implement detection for critical symptoms including but not limited to:
 - Chest pain or pressure
 - Difficulty breathing
@@ -743,7 +789,7 @@ Implement detection for critical symptoms including but not limited to:
 - Stroke symptoms
 - Severe allergic reactions
 
-### 10.3 Image Analysis Scope
+### 10.4 Image Analysis Scope
 Image upload and analysis is strictly limited to:
 - Skin conditions and rashes
 - Visible wounds or injuries
@@ -751,7 +797,7 @@ Image upload and analysis is strictly limited to:
 - NOT for internal conditions or X-rays/scans
 - OPTIONAL - system functions without image
 
-### 10.4 India-Specific Requirements
+### 10.5 India-Specific Requirements
 - All hospital data must be India-specific (no US or foreign hospitals)
 - Currency displayed in INR (₹) only
 - Insurance options include Ayushman Bharat and State Government schemes
@@ -760,54 +806,51 @@ Image upload and analysis is strictly limited to:
 
 ## 11. Changes Applied
 
-### 11.1 Enhanced Decision Logic
-- Added severity-aware condition filtering
-- Implemented symptom-condition minimum match rule
-- Added fever-specific logic
-- Implemented confidence score adjustment based on severity
-- Added specialist recommendation control logic
-- Maintained safety override for emergency conditions
+### 11.1 Medical Data Model Clarification
+- Renamed diseases table to common_conditions table
+- Clarified this is a Common Conditions Knowledge Base, NOT a disease or diagnosis database
+- Updated all references from disease to condition or common condition
+- Separated hospital information into distinct database
 
-### 11.2 Database Schema Updates
-- Added symptom_type field to symptoms table (PRIMARY/SECONDARY)
-- Added symptom_priority field to disease_symptom_mapping table
-- Added risk_level field to diseases table
+### 11.2 Terminology Updates
+- Changed disease to common condition throughout document
+- Changed diagnosis to possible common condition
+- Updated all API endpoints and database references
+- Updated sample data to reflect common conditions
 
-### 11.3 AI Processing Improvements
-- Severity explicitly incorporated into condition generation
-- Minimum symptom match threshold enforced
-- Fever presence affects condition likelihood
-- Confidence scores capped for mild severity
-- Specialist recommendations controlled by risk level and severity
+### 11.3 Disclaimer Requirements
+- Added mandatory disclaimer display wherever conditions are shown
+- Required label: Possible common conditions (not a diagnosis)
+- Enhanced medical disclaimer text to clarify knowledge base purpose
+- Added condition display disclaimer section
 
-### 11.4 Output Behavior
-- Narrower condition list for mild severity (2-3 items)
-- No chronic or unrelated diseases for mild cases
-- General Physician only for low-risk mild cases
-- Mild guidance-focused output for mild severity
-- Emergency alerts maintained for critical symptoms
+### 11.4 Database Structure
+- Renamed diseases table to common_conditions
+- Renamed disease_symptom_mapping to condition_symptom_mapping
+- Renamed disease_specialist_mapping to condition_specialist_mapping
+- Maintained separate hospitals database
+- Updated all foreign key references
 
-### 11.5 UI Enhancements (New)
-- Added responsive top navigation bar with app name and navigation items
-- Implemented Dark Mode and Light Mode with system preference detection
-- Added theme toggle functionality with localStorage persistence
-- Applied theme consistently across all UI components
-- Maintained red color for emergency alerts in both themes
-- Implemented CSS variables for color management
-- Added smooth theme transition animations
-- Created mobile-responsive navbar with hamburger menu
+### 11.5 Sample Data Updates
+- Updated sample conditions to reflect common, guidance-level conditions:
+  - Common Cold
+  - Common Viral Fever
+  - Influenza-like Symptoms
+  - Fatigue-related Headache
+  - Tension Headache
+  - Dehydration
+  - Gastroenteritis-like Symptoms
+- Removed diagnostic disease names
+- Added -like symptoms suffix where appropriate
 
-### 11.6 Before vs After Behavior
+### 11.6 API and Logic Updates
+- Updated API endpoint names to use conditions instead of diseases
+- Modified output labeling to include Possible common conditions (not a diagnosis)
+- Enhanced disclaimer display requirements in UI/UX section
+- Maintained all existing safety and filtering logic
 
-**Before:**
-- Input: headache, body pain, fever (mild)
-- Output: 5 conditions including Hypertension, Pneumonia, Cardiac issues
-- Confidence: High scores for serious conditions
-- Specialist: Multiple organ-specific specialists
-
-**After:**
-- Input: headache, body pain, fever (mild)
-- Output: 2-3 conditions - Viral Fever, Influenza, Tension Headache
-- Confidence: ≤60% for all conditions
-- Specialist: General Physician only
-- No chronic or unrelated diseases included
+### 11.7 Documentation Clarity
+- Emphasized knowledge base is for symptom pattern matching only
+- Clarified guidance-level condition suggestions purpose
+- Reinforced non-diagnostic nature throughout document
+- Added separate section for Common Conditions Knowledge Base Module

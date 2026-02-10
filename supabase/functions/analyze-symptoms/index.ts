@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
         }
         // Severe severity keeps original high confidence
 
-        let reasoning = `Based on ${matchCount} matching symptom(s)`;
+        let reasoning = `Pattern match based on ${matchCount} symptom(s)`;
         
         // Add info about custom symptoms if any were matched
         const customMatchCount = customSymptomIds.filter(id => 
@@ -301,16 +301,16 @@ Deno.serve(async (req) => {
         reasoning += '. ';
         
         if (disease.is_chronic) {
-          reasoning += 'This is a chronic condition. ';
+          reasoning += 'Typically a chronic condition. ';
         }
         if (disease.is_infectious) {
-          reasoning += 'This condition is infectious. ';
+          reasoning += 'Typically infectious. ';
           if (hasFever) {
-            reasoning += 'Fever supports this diagnosis. ';
+            reasoning += 'Fever pattern supports this match. ';
           }
         }
         
-        reasoning += `Typical urgency level: ${disease.urgency_level}.`;
+        reasoning += `Guidance urgency level: ${disease.urgency_level}.`;
 
         return {
           disease,
