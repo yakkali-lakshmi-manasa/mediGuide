@@ -19,7 +19,7 @@ An AI-powered healthcare application designed to help users understand their sym
 
 ### 2.1 User Input Module
 
-#### 2.1.1 Symptom Input (UPDATED)
+#### 2.1.1 Symptom Input
 **User-Driven Symptom Selection:**
 - Predefined symptom checklist (common symptoms only)
 - Free-text input field: \"Add other symptoms (optional)\"
@@ -51,7 +51,7 @@ An AI-powered healthcare application designed to help users understand their sym
 - Insurance provider (optional)
 - Hospital preference (Government/Private/Trust or Charitable)
 
-#### 2.1.4 Image Upload (UPDATED)
+#### 2.1.4 Image Upload
 - Image upload capability is OPTIONAL
 - If image is provided: Use it as additional context (especially for skin-related conditions)
 - If image is NOT provided: System functions normally using symptoms only
@@ -59,7 +59,7 @@ An AI-powered healthcare application designed to help users understand their sym
 - Image size validation
 - Applicable for skin and visible diseases only
 
-### 2.2 Disease Analysis Module (UPDATED)
+### 2.2 Disease Analysis Module
 
 #### 2.2.1 Symptom-Based Analysis
 **Combined Symptom Processing:**
@@ -71,6 +71,36 @@ An AI-powered healthcare application designed to help users understand their sym
 - Generate top 3-5 possible conditions
 - Provide confidence scores for each condition
 - Explain reasoning behind each possible condition
+
+**Severity-Aware Condition Filtering (CRITICAL):**
+- Explicitly incorporate user-reported severity into condition generation
+- If severity = \"Mild\":
+  - PRIORITIZE common, self-limiting conditions
+  - DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified by symptoms
+  - Examples:
+    - Mild fever + headache + body pain → Allow: Viral Fever, Influenza, Tension Headache; Suppress: Pneumonia, Hypertension, Cardiac conditions
+
+**Symptom-Condition Minimum Match Rule:**
+- Each condition must meet a minimum symptom relevance threshold
+- A condition should be included ONLY IF:
+  - At least one PRIMARY symptom matches, OR
+  - Two or more SECONDARY symptoms match
+- Examples:
+  - Gastroenteritis requires ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
+  - Pneumonia requires ≥1 respiratory symptom (cough, breathlessness, chest pain)
+  - Hypertension must NOT be suggested unless BP-related symptoms OR user history indicates it
+
+**Fever-Specific Logic:**
+- Fever should increase likelihood of:
+  - Viral infections
+  - Influenza
+- Fever should DECREASE likelihood of:
+  - Purely chronic conditions (e.g., hypertension, migraine-only cases)
+
+**Confidence Score Adjustment:**
+- For mild severity:
+  - Cap confidence scores to lower ranges (e.g., ≤60%)
+- Do NOT allow high-confidence serious conditions unless severity is Moderate or Severe
 
 #### 2.2.2 Image-Based Analysis (Optional)
 - CNN-based image analysis for skin conditions (if image provided)
@@ -105,13 +135,19 @@ For each possible condition, provide:
 - Detect critical symptoms requiring immediate care
 - Display prominent emergency warnings
 - Provide emergency contact information
+- Emergency conditions may still appear ONLY IF strong symptom indicators exist
+- Do NOT remove emergency alert system
 
 ### 2.5 Specialist Recommendation Module
 
+**Specialist Recommendation Control:**
 - Map possible conditions to appropriate medical specialties
 - Recommend specialist type only (no individual doctor names)
 - Explain why specific specialist is recommended
 - Support multiple specialist recommendations if needed
+- If all suggested conditions are Low Risk + Mild severity:
+  - Recommend ONLY \"General Physician\"
+- Do NOT suggest organ-specific specialists unless matching organ symptoms are present
 
 ### 2.6 Hospital Recommendation Module
 
@@ -156,8 +192,10 @@ For each possible condition, provide:
 - Free-text symptom normalization (NLP)
 - CNN-based image classification for skin diseases (optional)
 - Multimodal fusion layer for combined analysis
+- Severity-aware filtering logic
+- Symptom-condition matching threshold system
 
-## 4. Database Schema (UPDATED)
+## 4. Database Schema
 
 ### 4.1 Required Tables
 
@@ -180,11 +218,12 @@ CREATE TABLE symptoms (
     symptom_name VARCHAR(255) NOT NULL,
     category VARCHAR(100),
     description TEXT,
+    symptom_type VARCHAR(50),
     INDEX idx_symptom_name (symptom_name)
 );
 ```
 
-#### user_custom_symptoms (NEW)
+#### user_custom_symptoms
 ```sql
 CREATE TABLE user_custom_symptoms (
     custom_symptom_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -197,7 +236,7 @@ CREATE TABLE user_custom_symptoms (
 );
 ```
 
-#### user_symptom_input (NEW)
+#### user_symptom_input
 ```sql
 CREATE TABLE user_symptom_input (
     input_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -225,6 +264,7 @@ CREATE TABLE diseases (
     is_chronic BOOLEAN,
     is_infectious BOOLEAN,
     urgency_level VARCHAR(20),
+    risk_level VARCHAR(20),
     INDEX idx_disease_name (disease_name)
 );
 ```
@@ -236,6 +276,7 @@ CREATE TABLE disease_symptom_mapping (
     disease_id INT,
     symptom_id INT,
     weight DECIMAL(3,2),
+    symptom_priority VARCHAR(20),
     FOREIGN KEY (disease_id) REFERENCES diseases(disease_id),
     FOREIGN KEY (symptom_id) REFERENCES symptoms(symptom_id),
     INDEX idx_disease_id (disease_id),
@@ -329,23 +370,56 @@ CREATE TABLE hospital_insurance_mapping (
 
 ```sql
 -- Sample predefined symptoms
-INSERT INTO symptoms (symptom_name, category, description) VALUES
-('Fever', 'General', 'Elevated body temperature'),
-('Headache', 'Neurological', 'Pain in head region'),
-('Cough', 'Respiratory', 'Forceful expulsion of air from lungs'),
-('Fatigue', 'General', 'Extreme tiredness'),
-('Nausea', 'Gastrointestinal', 'Feeling of sickness');
+INSERT INTO symptoms (symptom_name, category, description, symptom_type) VALUES
+('Fever', 'General', 'Elevated body temperature', 'PRIMARY'),
+('Headache', 'Neurological', 'Pain in head region', 'PRIMARY'),
+('Cough', 'Respiratory', 'Forceful expulsion of air from lungs', 'PRIMARY'),
+('Fatigue', 'General', 'Extreme tiredness', 'SECONDARY'),
+('Nausea', 'Gastrointestinal', 'Feeling of sickness', 'PRIMARY'),
+('Body Pain', 'General', 'Generalized body ache', 'SECONDARY'),
+('Vomiting', 'Gastrointestinal', 'Forceful expulsion of stomach contents', 'PRIMARY'),
+('Diarrhea', 'Gastrointestinal', 'Loose or watery stools', 'PRIMARY'),
+('Breathlessness', 'Respiratory', 'Difficulty breathing', 'PRIMARY'),
+('Chest Pain', 'Cardiovascular', 'Pain in chest region', 'PRIMARY');
 
 -- Sample diseases
-INSERT INTO diseases (disease_name, description, causes, risk_factors, is_chronic, is_infectious, urgency_level) VALUES
-('Common Cold', 'Viral infection of upper respiratory tract', 'Rhinovirus', 'Weakened immunity', FALSE, TRUE, 'Low'),
-('Migraine', 'Severe headache disorder', 'Neurological factors', 'Stress, genetics', TRUE, FALSE, 'Medium');
+INSERT INTO diseases (disease_name, description, causes, risk_factors, is_chronic, is_infectious, urgency_level, risk_level) VALUES
+('Common Cold', 'Viral infection of upper respiratory tract', 'Rhinovirus', 'Weakened immunity', FALSE, TRUE, 'Low', 'Low'),
+('Viral Fever', 'Fever caused by viral infection', 'Various viruses', 'Weakened immunity, seasonal changes', FALSE, TRUE, 'Low', 'Low'),
+('Influenza', 'Flu caused by influenza virus', 'Influenza virus', 'Seasonal exposure, weakened immunity', FALSE, TRUE, 'Low', 'Low'),
+('Tension Headache', 'Headache caused by muscle tension', 'Stress, poor posture', 'Stress, fatigue', FALSE, FALSE, 'Low', 'Low'),
+('Migraine', 'Severe headache disorder', 'Neurological factors', 'Stress, genetics', TRUE, FALSE, 'Medium', 'Medium'),
+('Pneumonia', 'Lung infection', 'Bacterial or viral infection', 'Weakened immunity, smoking', FALSE, TRUE, 'High', 'High'),
+('Hypertension', 'High blood pressure', 'Multiple factors', 'Age, obesity, family history', TRUE, FALSE, 'Medium', 'Medium'),
+('Gastroenteritis', 'Inflammation of stomach and intestines', 'Viral or bacterial infection', 'Contaminated food or water', FALSE, TRUE, 'Medium', 'Medium');
+
+-- Sample disease-symptom mappings
+INSERT INTO disease_symptom_mapping (disease_id, symptom_id, weight, symptom_priority) VALUES
+(1, 1, 0.8, 'PRIMARY'),
+(1, 2, 0.6, 'SECONDARY'),
+(1, 3, 0.9, 'PRIMARY'),
+(2, 1, 0.9, 'PRIMARY'),
+(2, 2, 0.7, 'SECONDARY'),
+(2, 6, 0.8, 'SECONDARY'),
+(3, 1, 0.9, 'PRIMARY'),
+(3, 3, 0.7, 'PRIMARY'),
+(3, 4, 0.6, 'SECONDARY'),
+(4, 2, 0.9, 'PRIMARY'),
+(6, 3, 0.9, 'PRIMARY'),
+(6, 9, 0.8, 'PRIMARY'),
+(6, 10, 0.7, 'PRIMARY'),
+(8, 5, 0.9, 'PRIMARY'),
+(8, 7, 0.9, 'PRIMARY'),
+(8, 8, 0.9, 'PRIMARY');
 
 -- Sample specialists
 INSERT INTO specialists (specialist_name, description) VALUES
 ('General Physician', 'Primary care doctor'),
 ('Neurologist', 'Specialist in nervous system disorders'),
-('Dermatologist', 'Specialist in skin conditions');
+('Dermatologist', 'Specialist in skin conditions'),
+('Pulmonologist', 'Specialist in respiratory system'),
+('Cardiologist', 'Specialist in heart conditions'),
+('Gastroenterologist', 'Specialist in digestive system');
 
 -- Sample hospitals
 INSERT INTO hospitals (hospital_name, type, address, city, state, pincode, contact_number, cost_range, cost_range_inr, emergency_available, diagnostic_facilities) VALUES
@@ -361,7 +435,7 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 ('Self-pay', 'Self-pay');
 ```
 
-## 5. API Endpoints (UPDATED)
+## 5. API Endpoints
 
 ### 5.1 User Input APIs
 - POST /api/symptoms/submit - Submit combined symptom data (predefined + custom)
@@ -382,7 +456,7 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - GET /api/specialists/list - Get specialist types
 - GET /api/insurance/list - Get insurance provider options
 
-## 6. Combined Symptom Processing Logic (NEW)
+## 6. Combined Symptom Processing Logic
 
 ### 6.1 Input Processing Flow
 1. User submits symptoms via:
@@ -411,24 +485,64 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
    - If match found: Link to symptom_id
    - If no match: Keep as custom symptom
 
-### 6.3 AI Analysis
-1. Combine all symptoms:
-   - Predefined symptoms (from symptoms table)
-   - Normalized custom symptoms (from user_custom_symptoms table)
+### 6.3 AI Analysis with Enhanced Decision Logic
 
-2. Equal importance:
-   - Treat both predefined and custom symptoms with equal weight
-   - Do NOT prioritize predefined over custom
+#### Step 1: Combine All Symptoms
+- Predefined symptoms (from symptoms table)
+- Normalized custom symptoms (from user_custom_symptoms table)
+- Treat both predefined and custom symptoms with equal weight
+- Do NOT prioritize predefined over custom
 
-3. Disease matching:
-   - Use disease_symptom_mapping for predefined symptoms
-   - Use ML model for custom symptoms
-   - Combine scores to generate top 3-5 possible conditions
+#### Step 2: Apply Severity-Aware Filtering
+**If severity = \"Mild\":**
+- PRIORITIZE common, self-limiting conditions
+- DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified
+- Examples:
+  - Mild fever + headache + body pain → Allow: Viral Fever, Influenza, Tension Headache
+  - Mild fever + headache + body pain → Suppress: Pneumonia, Hypertension, Cardiac conditions
 
-4. Confidence scoring:
-   - Calculate confidence based on symptom match percentage
-   - Consider severity and duration
-   - Adjust for custom symptom uncertainty
+**If severity = \"Moderate\" or \"Severe\":**
+- Allow broader range of conditions including serious diseases
+- Apply standard matching logic
+
+#### Step 3: Apply Symptom-Condition Minimum Match Rule
+For each candidate condition, verify:
+- At least one PRIMARY symptom matches, OR
+- Two or more SECONDARY symptoms match
+
+**Examples:**
+- Gastroenteritis: Requires ≥1 GI symptom (vomiting, diarrhea, abdominal pain)
+- Pneumonia: Requires ≥1 respiratory symptom (cough, breathlessness, chest pain)
+- Hypertension: Must NOT be suggested unless BP-related symptoms OR user history indicates it
+
+#### Step 4: Apply Fever-Specific Logic
+**If fever is present:**
+- INCREASE likelihood of:
+  - Viral infections
+  - Influenza
+  - Infectious diseases
+- DECREASE likelihood of:
+  - Purely chronic conditions (e.g., hypertension, migraine-only cases)
+
+#### Step 5: Confidence Score Adjustment
+**For mild severity:**
+- Cap confidence scores to lower ranges (e.g., ≤60%)
+- Do NOT allow high-confidence serious conditions unless severity is Moderate or Severe
+
+**For moderate/severe severity:**
+- Apply standard confidence calculation
+- Allow higher confidence scores for serious conditions if symptom match is strong
+
+#### Step 6: Generate Final Output
+- Output top 2-3 conditions for mild severity
+- Output top 3-5 conditions for moderate/severe severity
+- Provide confidence scores for each condition
+- Explain reasoning behind each possible condition
+
+#### Step 7: Safety Override
+- Emergency conditions may still appear ONLY IF strong symptom indicators exist
+- Do NOT remove emergency alert system
+- Red-flag symptoms always trigger emergency warnings regardless of severity
 
 ### 6.4 Image Integration (Optional)
 - If image provided:
@@ -438,6 +552,50 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - If image NOT provided:
   - Proceed with symptom-only analysis
   - No impact on system functionality
+
+### 6.5 Specialist Recommendation Logic
+**If all suggested conditions are Low Risk + Mild severity:**
+- Recommend ONLY \"General Physician\"
+- Do NOT suggest organ-specific specialists
+
+**If any condition is Medium/High Risk OR severity is Moderate/Severe:**
+- Recommend appropriate organ-specific specialists
+- Only suggest specialists when matching organ symptoms are present
+
+### 6.6 Expected Output Behavior Examples
+
+**Example 1: Mild Severity Input**
+- Input:
+  - Symptoms: headache, body pain, fever
+  - Severity: mild
+- Expected Output:
+  - Narrow condition list (2-3 items)
+  - Conditions: Viral Fever, Influenza, Tension Headache
+  - Confidence scores: ≤60%
+  - Specialist: General Physician only
+  - No chronic or unrelated diseases
+  - Mild guidance-focused output
+
+**Example 2: Moderate Severity Input**
+- Input:
+  - Symptoms: cough, breathlessness, chest pain, fever
+  - Severity: moderate
+- Expected Output:
+  - Broader condition list (3-5 items)
+  - Conditions: Pneumonia, Bronchitis, Respiratory Infection
+  - Confidence scores: Standard range
+  - Specialist: Pulmonologist
+  - Appropriate serious conditions included
+
+**Example 3: Emergency Symptoms**
+- Input:
+  - Symptoms: severe chest pain, breathlessness
+  - Severity: severe
+- Expected Output:
+  - Emergency alert displayed
+  - High-risk conditions included
+  - Immediate medical attention recommended
+  - Emergency contact information provided
 
 ## 7. Safety and Ethical Guidelines
 
@@ -457,6 +615,8 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - Display emergency warnings prominently
 - Provide emergency contact numbers
 - Suggest immediate medical attention when needed
+- Emergency conditions may still appear ONLY IF strong symptom indicators exist
+- Do NOT remove emergency alert system
 
 ### 7.4 Data Privacy
 - Secure storage of user health information
@@ -478,6 +638,8 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - Complete frontend code (React/Next.js)
 - ML model structure and implementation
 - NLP symptom normalization module
+- Severity-aware filtering logic implementation
+- Symptom-condition matching threshold system
 - Database schema with SQL scripts
 - Sample data for testing
 
@@ -487,6 +649,7 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - README file
 - User guide
 - Developer documentation
+- Decision logic explanation document
 
 ### 8.3 Project Suitability
 This application is designed to be suitable for:
@@ -528,47 +691,44 @@ Image upload and analysis is strictly limited to:
 
 ## 10. Changes Applied
 
-### 10.1 Symptom Input Logic
-- Removed predefined or forced disease/module selection
-- System is now fully USER-DRIVEN
-- No skin-first or predefined filters
+### 10.1 Enhanced Decision Logic
+- Added severity-aware condition filtering
+- Implemented symptom-condition minimum match rule
+- Added fever-specific logic
+- Implemented confidence score adjustment based on severity
+- Added specialist recommendation control logic
+- Maintained safety override for emergency conditions
 
-### 10.2 Symptom Selection Design
-- Predefined symptom checklist provided (common symptoms only)
-- Free-text input field added: \"Add other symptoms (optional)\"
-- Users can select from predefined list, enter free-text, or use both
+### 10.2 Database Schema Updates
+- Added symptom_type field to symptoms table (PRIMARY/SECONDARY)
+- Added symptom_priority field to disease_symptom_mapping table
+- Added risk_level field to diseases table
 
-### 10.3 Validation Rule
-- No single symptom field is mandatory
-- At least ONE symptom must be provided (predefined OR free-text OR both)
-- Form submission blocked if zero symptoms provided
-- Validation message: \"Please provide at least one symptom to continue.\"
+### 10.3 AI Processing Improvements
+- Severity explicitly incorporated into condition generation
+- Minimum symptom match threshold enforced
+- Fever presence affects condition likelihood
+- Confidence scores capped for mild severity
+- Specialist recommendations controlled by risk level and severity
 
-### 10.4 AI Processing
-- Combines predefined and user-entered symptoms
-- Normalizes free-text symptoms (typos, synonyms)
-- Treats both inputs with equal importance
-- Does NOT prioritize predefined over custom symptoms
+### 10.4 Output Behavior
+- Narrower condition list for mild severity (2-3 items)
+- No chronic or unrelated diseases for mild cases
+- General Physician only for low-risk mild cases
+- Mild guidance-focused output for mild severity
+- Emergency alerts maintained for critical symptoms
 
-### 10.5 Image Upload Handling
-- Image upload is OPTIONAL
-- If provided: Used as additional context (especially for skin conditions)
-- If NOT provided: System functions normally using symptoms only
+### 10.5 Before vs After Behavior
 
-### 10.6 Database Updates
-- Added user_custom_symptoms table for storing custom symptom text
-- Added user_symptom_input table for linking predefined and custom symptoms
-- Maintains SQL relational structure with proper foreign keys
-- Stores original_text and normalized_text separately
+**Before:**
+- Input: headache, body pain, fever (mild)
+- Output: 5 conditions including Hypertension, Pneumonia, Cardiac issues
+- Confidence: High scores for serious conditions
+- Specialist: Multiple organ-specific specialists
 
-### 10.7 UI & UX Clarity
-- Clear instruction displayed: \"You can select symptoms, type symptoms, or do both.\"
-- Validation message shown when no symptoms provided
-- Optional image upload clearly indicated
-
-### 10.8 Output Logic
-- Generates possible conditions with confidence levels
-- Provides severity classification and emergency alerts
-- Suggests diagnostic tests and next steps
-- Maintains medical disclaimer
-- Does NOT provide diagnosis, treatment, or doctor recommendation
+**After:**
+- Input: headache, body pain, fever (mild)
+- Output: 2-3 conditions - Viral Fever, Influenza, Tension Headache
+- Confidence: ≤60% for all conditions
+- Specialist: General Physician only
+- No chronic or unrelated diseases included

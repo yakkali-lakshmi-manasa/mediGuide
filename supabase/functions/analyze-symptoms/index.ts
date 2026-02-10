@@ -105,33 +105,150 @@ Deno.serve(async (req) => {
 
     if (mappingError) throw mappingError;
 
-    // Calculate disease scores
-    const diseaseScores = new Map<string, { disease: any; score: number; matchCount: number }>();
+    // Categorize symptoms by type for better matching logic
+    const symptomCategories = new Map<string, string>();
+    symptomData?.forEach(s => {
+      if (s.category) {
+        symptomCategories.set(s.symptom_id, s.category);
+      }
+    });
+
+    // Check if fever is present (important for infection likelihood)
+    const hasFever = symptomData?.some(s => s.symptom_name.toLowerCase().includes('fever')) || false;
+
+    // Calculate disease scores with category-aware matching
+    const diseaseScores = new Map<string, { 
+      disease: any; 
+      score: number; 
+      matchCount: number;
+      categoryMatches: Set<string>;
+      hasRelevantSymptoms: boolean;
+    }>();
     
     mappingData?.forEach((mapping: any) => {
       const diseaseId = mapping.disease_id;
+      const symptomId = mapping.symptom_id;
+      const symptomCategory = symptomCategories.get(symptomId);
+      
       const existing = diseaseScores.get(diseaseId);
       
       if (existing) {
         existing.score += mapping.weight;
         existing.matchCount += 1;
+        if (symptomCategory) {
+          existing.categoryMatches.add(symptomCategory);
+        }
       } else {
+        const categorySet = new Set<string>();
+        if (symptomCategory) {
+          categorySet.add(symptomCategory);
+        }
         diseaseScores.set(diseaseId, {
           disease: mapping.diseases,
           score: mapping.weight,
           matchCount: 1,
+          categoryMatches: categorySet,
+          hasRelevantSymptoms: false,
         });
       }
     });
 
-    // Sort by score and get top 5
-    const sortedDiseases = Array.from(diseaseScores.values())
+    // Apply medical precision filtering based on severity and symptom relevance
+    const filteredDiseases = Array.from(diseaseScores.values()).filter(({ disease, matchCount, categoryMatches }) => {
+      // RULE 1: Minimum symptom match requirement
+      // Require at least 1 symptom match for any condition
+      if (matchCount < 1) return false;
+
+      // RULE 2: Severity-aware filtering for MILD cases
+      if (symptomInput.severity === 'mild') {
+        // Suppress serious/chronic conditions unless strongly justified
+        const isSeriousCondition = disease.urgency_level === 'high' || 
+                                   disease.urgency_level === 'emergency' ||
+                                   disease.is_chronic;
+        
+        // For serious conditions, require at least 2 matching symptoms
+        if (isSeriousCondition && matchCount < 2) {
+          return false;
+        }
+
+        // Suppress organ-specific chronic diseases (Hypertension, Cardiac, etc.) for mild severity
+        const isOrganSpecificChronic = disease.is_chronic && 
+          (disease.disease_name.toLowerCase().includes('hypertension') ||
+           disease.disease_name.toLowerCase().includes('cardiac') ||
+           disease.disease_name.toLowerCase().includes('myocardial'));
+        
+        if (isOrganSpecificChronic && matchCount < 3) {
+          return false;
+        }
+      }
+
+      // RULE 3: Category-specific relevance checks
+      const diseaseName = disease.disease_name.toLowerCase();
+      
+      // Gastroenteritis requires GI symptoms
+      if (diseaseName.includes('gastro') || diseaseName.includes('enteritis')) {
+        const hasGISymptom = categoryMatches.has('Gastrointestinal');
+        if (!hasGISymptom) return false;
+      }
+
+      // Pneumonia requires respiratory symptoms
+      if (diseaseName.includes('pneumonia')) {
+        const hasRespiratorySymptom = categoryMatches.has('Respiratory');
+        if (!hasRespiratorySymptom) return false;
+      }
+
+      // Hypertension should not appear without cardiovascular symptoms or medical history
+      if (diseaseName.includes('hypertension')) {
+        const hasCardiovascularSymptom = categoryMatches.has('Cardiovascular');
+        const hasHistoryMention = profile.medical_history?.toLowerCase().includes('hypertension') ||
+                                  profile.medical_history?.toLowerCase().includes('blood pressure');
+        if (!hasCardiovascularSymptom && !hasHistoryMention) {
+          return false;
+        }
+      }
+
+      // Cardiac conditions require cardiovascular symptoms
+      if (diseaseName.includes('cardiac') || diseaseName.includes('myocardial')) {
+        const hasCardiovascularSymptom = categoryMatches.has('Cardiovascular');
+        if (!hasCardiovascularSymptom) return false;
+      }
+
+      // Dermatological conditions require skin symptoms
+      if (diseaseName.includes('dermatitis') || diseaseName.includes('eczema') || 
+          diseaseName.includes('psoriasis')) {
+        const hasSkinSymptom = categoryMatches.has('Dermatological');
+        if (!hasSkinSymptom) return false;
+      }
+
+      return true;
+    });
+
+    // RULE 4: Fever-specific logic - boost infectious conditions
+    filteredDiseases.forEach(item => {
+      if (hasFever && item.disease.is_infectious) {
+        // Boost score for infectious conditions when fever is present
+        item.score *= 1.3;
+      }
+      
+      if (hasFever && item.disease.is_chronic && !item.disease.is_infectious) {
+        // Reduce score for purely chronic conditions when fever is present
+        item.score *= 0.7;
+      }
+    });
+
+    // Sort by adjusted score and limit results based on severity
+    let maxResults = 5;
+    if (symptomInput.severity === 'mild') {
+      maxResults = 3; // Narrow down to 2-3 conditions for mild cases
+    }
+
+    const sortedDiseases = filteredDiseases
       .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+      .slice(0, maxResults);
 
     // Fetch specialists and tests for each disease
     const possibleConditions = await Promise.all(
-      sortedDiseases.map(async ({ disease, score, matchCount }) => {
+      sortedDiseases.map(async ({ disease, score, matchCount, categoryMatches }) => {
         const { data: specialists } = await supabaseClient
           .from('disease_specialist_mapping')
           .select('specialists(*)')
@@ -143,7 +260,26 @@ Deno.serve(async (req) => {
           .eq('disease_id', disease.disease_id);
 
         const maxScore = allSymptomIds.length;
-        const confidenceScore = Math.min((score / maxScore) * 100, 95);
+        let confidenceScore = Math.min((score / maxScore) * 100, 95);
+
+        // RULE 5: Confidence score adjustment based on severity
+        if (symptomInput.severity === 'mild') {
+          // Cap confidence for mild severity
+          const isSeriousCondition = disease.urgency_level === 'high' || 
+                                     disease.urgency_level === 'emergency';
+          
+          if (isSeriousCondition) {
+            // Serious conditions get very low confidence for mild severity
+            confidenceScore = Math.min(confidenceScore * 0.4, 35);
+          } else {
+            // Even common conditions capped at 60% for mild severity
+            confidenceScore = Math.min(confidenceScore, 60);
+          }
+        } else if (symptomInput.severity === 'moderate') {
+          // Moderate severity allows higher confidence
+          confidenceScore = Math.min(confidenceScore, 80);
+        }
+        // Severe severity keeps original high confidence
 
         let reasoning = `Based on ${matchCount} matching symptom(s)`;
         
@@ -155,6 +291,13 @@ Deno.serve(async (req) => {
         if (customMatchCount > 0) {
           reasoning += ` (including ${customMatchCount} from your description)`;
         }
+        
+        // Add category information
+        if (categoryMatches.size > 0) {
+          const categories = Array.from(categoryMatches).join(', ');
+          reasoning += ` affecting ${categories.toLowerCase()} system`;
+        }
+        
         reasoning += '. ';
         
         if (disease.is_chronic) {
@@ -162,6 +305,9 @@ Deno.serve(async (req) => {
         }
         if (disease.is_infectious) {
           reasoning += 'This condition is infectious. ';
+          if (hasFever) {
+            reasoning += 'Fever supports this diagnosis. ';
+          }
         }
         
         reasoning += `Typical urgency level: ${disease.urgency_level}.`;
@@ -187,6 +333,7 @@ Deno.serve(async (req) => {
       urgencyLevel = 'medium';
     }
 
+    // RULE 6: Specialist recommendation control
     // Collect all recommended specialists
     const allSpecialists = new Map();
     possibleConditions.forEach(condition => {
@@ -194,6 +341,32 @@ Deno.serve(async (req) => {
         allSpecialists.set(specialist.specialist_id, specialist);
       });
     });
+
+    // For mild severity with only low-risk conditions, recommend only General Physician
+    let recommendedSpecialists = Array.from(allSpecialists.values());
+    
+    if (symptomInput.severity === 'mild') {
+      const allLowRisk = possibleConditions.every(c => 
+        c.disease.urgency_level === 'low' && !c.disease.is_chronic
+      );
+      
+      if (allLowRisk) {
+        // Filter to only General Physician or General Medicine
+        recommendedSpecialists = recommendedSpecialists.filter(s => 
+          s.specialist_name.toLowerCase().includes('general') ||
+          s.specialist_name.toLowerCase().includes('physician') ||
+          s.specialist_name.toLowerCase().includes('family')
+        );
+        
+        // If no general physician found, keep only the first specialist
+        if (recommendedSpecialists.length === 0 && allSpecialists.size > 0) {
+          recommendedSpecialists = [Array.from(allSpecialists.values())[0]];
+        }
+      } else {
+        // For mild with some risk, limit to 2 most relevant specialists
+        recommendedSpecialists = recommendedSpecialists.slice(0, 2);
+      }
+    }
 
     // Collect all recommended tests
     const allTests = new Map();
@@ -207,11 +380,13 @@ Deno.serve(async (req) => {
       possible_conditions: possibleConditions,
       urgency_level: urgencyLevel,
       red_flags: redFlags.map(s => s.symptom_name),
-      recommended_specialists: Array.from(allSpecialists.values()),
+      recommended_specialists: recommendedSpecialists,
       recommended_tests: Array.from(allTests.values()),
       emergency_alert: urgencyLevel === 'emergency',
       custom_symptoms_processed: normalizedCustomSymptoms.length,
       custom_symptoms_matched: customSymptomIds.length,
+      severity_applied: symptomInput.severity,
+      filtering_applied: true,
     };
 
     return new Response(JSON.stringify(analysisResult), {
