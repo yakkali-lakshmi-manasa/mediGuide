@@ -22,7 +22,7 @@ An AI-powered healthcare application designed to help users understand their sym
 #### 2.1.1 Symptom Input
 **User-Driven Symptom Selection:**
 - Predefined symptom checklist (common symptoms only)
-- Free-text input field: \"Add other symptoms (optional)\"
+- Free-text input field: Add other symptoms (optional)
 - Users may:
   - Select symptoms only from predefined list
   - Enter symptoms only via free-text
@@ -32,10 +32,10 @@ An AI-powered healthcare application designed to help users understand their sym
 - No single symptom field is mandatory by itself
 - At least ONE symptom must be provided (either from predefined list OR free-text OR both)
 - Form submission is blocked if zero symptoms are provided
-- Display validation message: \"Please provide at least one symptom to continue.\"
+- Display validation message: Please provide at least one symptom to continue.
 
 **UI Clarity:**
-- Display clear instruction: \"You can select symptoms, type symptoms, or do both.\"
+- Display clear instruction: You can select symptoms, type symptoms, or do both.
 - Duration of symptoms (days/weeks/months)
 - Severity level (mild/moderate/severe)
 
@@ -74,7 +74,7 @@ An AI-powered healthcare application designed to help users understand their sym
 
 **Severity-Aware Condition Filtering (CRITICAL):**
 - Explicitly incorporate user-reported severity into condition generation
-- If severity = \"Mild\":
+- If severity = Mild:
   - PRIORITIZE common, self-limiting conditions
   - DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified by symptoms
   - Examples:
@@ -146,7 +146,7 @@ For each possible condition, provide:
 - Explain why specific specialist is recommended
 - Support multiple specialist recommendations if needed
 - If all suggested conditions are Low Risk + Mild severity:
-  - Recommend ONLY \"General Physician\"
+  - Recommend ONLY General Physician
 - Do NOT suggest organ-specific specialists unless matching organ symptoms are present
 
 ### 2.6 Hospital Recommendation Module
@@ -466,7 +466,7 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 
 2. Validation:
    - Check if at least one symptom is provided
-   - If zero symptoms: Block submission and display \"Please provide at least one symptom to continue.\"
+   - If zero symptoms: Block submission and display Please provide at least one symptom to continue.
 
 3. Storage:
    - Store predefined symptoms in user_symptom_input table (linked to symptoms table)
@@ -494,14 +494,14 @@ INSERT INTO insurance_providers (provider_name, provider_type) VALUES
 - Do NOT prioritize predefined over custom
 
 #### Step 2: Apply Severity-Aware Filtering
-**If severity = \"Mild\":**
+**If severity = Mild:**
 - PRIORITIZE common, self-limiting conditions
 - DE-PRIORITIZE or SUPPRESS serious, chronic, or organ-specific diseases unless strongly justified
 - Examples:
   - Mild fever + headache + body pain → Allow: Viral Fever, Influenza, Tension Headache
   - Mild fever + headache + body pain → Suppress: Pneumonia, Hypertension, Cardiac conditions
 
-**If severity = \"Moderate\" or \"Severe\":**
+**If severity = Moderate or Severe:**
 - Allow broader range of conditions including serious diseases
 - Apply standard matching logic
 
@@ -555,7 +555,7 @@ For each candidate condition, verify:
 
 ### 6.5 Specialist Recommendation Logic
 **If all suggested conditions are Low Risk + Mild severity:**
-- Recommend ONLY \"General Physician\"
+- Recommend ONLY General Physician
 - Do NOT suggest organ-specific specialists
 
 **If any condition is Medium/High Risk OR severity is Moderate/Severe:**
@@ -631,9 +631,75 @@ For each candidate condition, verify:
 - NO replacement for professional medical advice
 - NO individual doctor recommendations
 
-## 8. Deliverables
+## 8. UI/UX Requirements
 
-### 8.1 Code Components
+### 8.1 Top Navigation Bar
+
+#### 8.1.1 Navigation Structure
+- **Left side:** Application name MediGuide
+- **Right side navigation items:**
+  - Symptom Check
+  - Hospital Finder
+  - Disclaimer
+  - Theme toggle (Dark / Light mode)
+
+#### 8.1.2 Responsive Behavior
+- Desktop: Full horizontal navigation bar with all items visible
+- Mobile: Hamburger menu for navigation items
+- Smooth transitions between mobile and desktop views
+
+### 8.2 Theme System
+
+#### 8.2.1 Theme Modes
+- **Light Mode:** Default light color scheme
+- **Dark Mode:** Dark color scheme for reduced eye strain
+- **System Preference:** Default theme follows user's system preference
+
+#### 8.2.2 Theme Toggle Functionality
+- Manual theme toggle button in navigation bar
+- Persist user's theme preference using localStorage
+- Smooth transition animations between themes
+
+#### 8.2.3 Theme Application Scope
+Apply theme consistently across all UI components:
+- Navigation bar
+- Forms and input fields
+- Cards and containers
+- Result sections
+- Hospital listings
+- Buttons and interactive elements
+- Text and typography
+- Background colors
+
+#### 8.2.4 Theme-Specific Color Guidelines
+- Use CSS variables for color management
+- Define separate color palettes for light and dark modes
+- Ensure sufficient contrast ratios for accessibility
+- **Emergency alerts must remain red in both themes** (critical safety requirement)
+
+#### 8.2.5 Implementation Requirements
+- Use CSS custom properties (variables) for theme colors
+- Implement smooth transition animations (e.g., 0.3s ease)
+- Store theme preference in localStorage with key theme
+- Load saved theme preference on application startup
+- Detect system preference using prefers-color-scheme media query
+
+### 8.3 Responsive Design
+- Mobile-first approach
+- Breakpoints for mobile, tablet, and desktop
+- Touch-friendly interface elements
+- Optimized layouts for different screen sizes
+
+### 8.4 Accessibility
+- WCAG 2.1 Level AA compliance
+- Keyboard navigation support
+- Screen reader compatibility
+- Sufficient color contrast in both themes
+- Focus indicators for interactive elements
+
+## 9. Deliverables
+
+### 9.1 Code Components
 - Complete backend code (Python)
 - Complete frontend code (React/Next.js)
 - ML model structure and implementation
@@ -642,29 +708,32 @@ For each candidate condition, verify:
 - Symptom-condition matching threshold system
 - Database schema with SQL scripts
 - Sample data for testing
+- Theme system implementation (CSS variables, localStorage integration)
+- Responsive navigation bar component
 
-### 8.2 Documentation
+### 9.2 Documentation
 - API documentation
 - Setup and installation instructions
 - README file
 - User guide
 - Developer documentation
 - Decision logic explanation document
+- Theme system documentation
 
-### 8.3 Project Suitability
+### 9.3 Project Suitability
 This application is designed to be suitable for:
 - Final-year academic project
 - Hackathon demonstration
 - Startup MVP (Minimum Viable Product)
 
-## 9. Other Requirements
+## 10. Other Requirements
 
-### 9.1 Medical Disclaimer Text
+### 10.1 Medical Disclaimer Text
 Display the following disclaimer prominently:
 
 IMPORTANT MEDICAL DISCLAIMER: This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions. The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
 
-### 9.2 Emergency Red-Flag Symptoms
+### 10.2 Emergency Red-Flag Symptoms
 Implement detection for critical symptoms including but not limited to:
 - Chest pain or pressure
 - Difficulty breathing
@@ -674,7 +743,7 @@ Implement detection for critical symptoms including but not limited to:
 - Stroke symptoms
 - Severe allergic reactions
 
-### 9.3 Image Analysis Scope
+### 10.3 Image Analysis Scope
 Image upload and analysis is strictly limited to:
 - Skin conditions and rashes
 - Visible wounds or injuries
@@ -682,16 +751,16 @@ Image upload and analysis is strictly limited to:
 - NOT for internal conditions or X-rays/scans
 - OPTIONAL - system functions without image
 
-### 9.4 India-Specific Requirements
+### 10.4 India-Specific Requirements
 - All hospital data must be India-specific (no US or foreign hospitals)
 - Currency displayed in INR (₹) only
 - Insurance options include Ayushman Bharat and State Government schemes
 - Location filters limited to Indian cities and states
 - Cost ranges realistic for Indian healthcare system
 
-## 10. Changes Applied
+## 11. Changes Applied
 
-### 10.1 Enhanced Decision Logic
+### 11.1 Enhanced Decision Logic
 - Added severity-aware condition filtering
 - Implemented symptom-condition minimum match rule
 - Added fever-specific logic
@@ -699,26 +768,36 @@ Image upload and analysis is strictly limited to:
 - Added specialist recommendation control logic
 - Maintained safety override for emergency conditions
 
-### 10.2 Database Schema Updates
+### 11.2 Database Schema Updates
 - Added symptom_type field to symptoms table (PRIMARY/SECONDARY)
 - Added symptom_priority field to disease_symptom_mapping table
 - Added risk_level field to diseases table
 
-### 10.3 AI Processing Improvements
+### 11.3 AI Processing Improvements
 - Severity explicitly incorporated into condition generation
 - Minimum symptom match threshold enforced
 - Fever presence affects condition likelihood
 - Confidence scores capped for mild severity
 - Specialist recommendations controlled by risk level and severity
 
-### 10.4 Output Behavior
+### 11.4 Output Behavior
 - Narrower condition list for mild severity (2-3 items)
 - No chronic or unrelated diseases for mild cases
 - General Physician only for low-risk mild cases
 - Mild guidance-focused output for mild severity
 - Emergency alerts maintained for critical symptoms
 
-### 10.5 Before vs After Behavior
+### 11.5 UI Enhancements (New)
+- Added responsive top navigation bar with app name and navigation items
+- Implemented Dark Mode and Light Mode with system preference detection
+- Added theme toggle functionality with localStorage persistence
+- Applied theme consistently across all UI components
+- Maintained red color for emergency alerts in both themes
+- Implemented CSS variables for color management
+- Added smooth theme transition animations
+- Created mobile-responsive navbar with hamburger menu
+
+### 11.6 Before vs After Behavior
 
 **Before:**
 - Input: headache, body pain, fever (mild)

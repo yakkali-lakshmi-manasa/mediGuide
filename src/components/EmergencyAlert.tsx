@@ -10,10 +10,12 @@ export default function EmergencyAlert({ redFlags }: EmergencyAlertProps) {
   if (redFlags.length === 0) return null;
 
   return (
-    <Alert className="border-destructive bg-destructive text-destructive-foreground">
-      <AlertTriangle className="h-6 w-6" />
-      <AlertTitle className="text-lg font-bold">⚠️ EMERGENCY ALERT</AlertTitle>
-      <AlertDescription className="mt-2 space-y-3">
+    <Alert className="border-2 border-red-600 bg-red-50 dark:bg-red-950 dark:border-red-500">
+      <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+      <AlertTitle className="text-lg font-bold text-red-900 dark:text-red-100">
+        ⚠️ EMERGENCY ALERT
+      </AlertTitle>
+      <AlertDescription className="mt-2 space-y-3 text-red-900 dark:text-red-100">
         <p className="font-semibold">
           You have reported critical symptoms that require IMMEDIATE medical attention:
         </p>
@@ -25,12 +27,11 @@ export default function EmergencyAlert({ redFlags }: EmergencyAlertProps) {
         <div className="flex flex-col gap-2 mt-4">
           <p className="font-bold">DO NOT DELAY - SEEK EMERGENCY CARE NOW</p>
           <Button
-            variant="outline"
-            className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-            onClick={() => window.open('tel:911')}
+            className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+            onClick={() => window.open('tel:108')}
           >
             <Phone className="mr-2 h-4 w-4" />
-            Call Emergency Services (911)
+            Call Emergency Services (108)
           </Button>
         </div>
       </AlertDescription>

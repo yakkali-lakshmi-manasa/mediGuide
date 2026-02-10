@@ -99,10 +99,24 @@
 @layer base {
   * {
     @apply border-border;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Ensure emergency alerts remain red in both themes */
+  .emergency-alert-red {
+    --alert-bg: 0 84% 95%;
+    --alert-border: 0 84% 60%;
+    --alert-text: 0 84% 20%;
+  }
+  
+  .dark .emergency-alert-red {
+    --alert-bg: 0 62% 15%;
+    --alert-border: 0 62% 50%;
+    --alert-text: 0 84% 95%;
   }
 }
 
