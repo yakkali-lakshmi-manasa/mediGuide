@@ -1,15 +1,3 @@
-# Welcome to Your Miaoda Project
-Miaoda Application Link URL
-    URL:https://medo.dev/projects/app-9gmytsqjzo5d
-
-# HealthCare Navigator
-
-An AI-powered healthcare assessment and care navigation system designed to help users understand their symptoms, identify possible health conditions, receive specialist recommendations, and find suitable hospitals.
-
-## ⚠️ Important Medical Disclaimer
-
-**This application is a health information and care navigation tool only. It does NOT provide medical diagnosis, treatment, or prescriptions.** The information provided represents possible conditions based on symptoms and should not be considered as medical advice. Always consult qualified healthcare professionals for proper diagnosis and treatment. In case of emergency, contact emergency services immediately.
-
 ## 🌟 Features
 
 ### 1. Symptom Assessment
@@ -200,28 +188,6 @@ Analyzes user symptoms and returns possible conditions with confidence scores.
 }
 ```
 
-## 🎯 Use Cases
-
-### Academic Project
-- Demonstrates full-stack development skills
-- Shows understanding of healthcare domain
-- Implements AI/ML concepts
-- Database design and optimization
-- User experience design
-
-### Hackathon
-- Complete working prototype
-- Addresses real-world healthcare problem
-- Scalable architecture
-- Modern tech stack
-
-### Startup MVP
-- Production-ready codebase
-- Extensible architecture
-- User-friendly interface
-- Safety-first approach
-
-## 🛠️ Development
 
 ### Project Structure
 ```
@@ -275,11 +241,7 @@ supabase/
 - [ ] Advanced ML models for better accuracy
 - [ ] Real-time chat with healthcare professionals
 
-## 📄 License
 
-This project is created for educational and demonstration purposes.
-
-## 👥 Support
 
 For questions or issues, please refer to the documentation or contact the development team.
 
